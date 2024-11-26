@@ -1,3 +1,5 @@
+// CLIENT PORTAL SCRIPTS
+
 document.getElementById('new-customer-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const dni = document.getElementById('dni').value;
@@ -94,4 +96,85 @@ document.getElementById('manage-bookings-form').addEventListener('submit', async
         alert(data.message);
     }
 });
+
+// LANDING PAGE SCRIPTS
+
+// Modal functionality
+function openClientModal() {
+    document.getElementById('clientModal').style.display = 'block';
+}
+
+function closeClientModal() {
+    document.getElementById('clientModal').style.display = 'none';
+    document.getElementById('loginForm').reset();
+    document.getElementById('newClientForm').reset();
+}
+
+// Handle login form submission
+function handleLogin(event) {
+    event.preventDefault();
+
+    document.getElementById('loginSuccess').style.display = 'none';
+    document.getElementById('loginFailed').style.display = 'none';
+    
+    const dni = document.getElementById('username').value;
+    const phone = document.getElementById('password').value;
+
+    fetch('http://localhost:5000/api/customers/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dni, phone })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            localStorage.setItem('customerDNI', data.dni);
+            //alert(`Welcome, ${data.name}!`);
+            document.getElementById('loginSuccess').style.display = 'block';
+            setTimeout(() => {
+                closeClientModal();
+                // Store login state (in a real app, you'd use proper authentication)
+                localStorage.setItem('isLoggedIn', 'true');
+                // Redirect to client portal
+                window.location.href = 'static/client-portal.html';
+            }, 1000);
+            
+        } else {
+            document.getElementById('loginFailed').style.display = 'block';
+            //alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred during login. Please try again.');
+    });
+}
+
+// Attach event listener when document is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+});
+
+// Handle new client registration
+function handleNewClient(event) {
+    event.preventDefault();
+    document.getElementById('registrationSuccess').style.display = 'block';
+    setTimeout(() => {
+        window.location.href = 'static/client-portal.html';
+    }, 1000);
+}
+
+function openAgentPortal() {
+    alert('Agent portal is under development.');
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target == document.getElementById('clientModal')) {
+        closeClientModal();
+    }
+}
 

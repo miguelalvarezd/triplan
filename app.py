@@ -7,7 +7,7 @@ app = Flask(__name__, static_folder='static')
 # Configure MySQL database
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'password'
+app.config['MYSQL_PASSWORD'] = '1075'
 app.config['MYSQL_DB'] = 'DB_TRIPLAN'
 
 conexion = MySQL(app)
@@ -16,6 +16,27 @@ CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 @app.route('/')
 def serve_index():
     return send_from_directory('static', 'index.html')
+
+# Client login
+@app.route('/api/customers/login', methods=['POST'])
+def login_customer():
+    try:
+        data = request.json
+        dni = data.get('dni')
+        phone = data.get('phone')
+
+        cursor = conexion.connection.cursor()
+        sql = "SELECT DNI, NOMBRE FROM CLIENTES WHERE DNI = %s AND TELEFONO = %s"
+        cursor.execute(sql, (dni, phone))
+        customer = cursor.fetchone()
+
+        if customer:
+            return jsonify({'success': True, 'dni': customer[0], 'name': customer[1]})
+        else:
+            return jsonify({'success': False, 'message': 'Login failed. Invalid credentials.'})
+    except Exception as ex:
+        return jsonify({'success': False, 'message': str(ex)})
+
 
 # Register a new customer
 @app.route('/api/customers', methods=['POST'])
