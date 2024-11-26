@@ -1,0 +1,220 @@
+/* Modern color palette and variables */
+:root {
+    --primary: #2563eb;
+    --primary-dark: #1e40af;
+    --secondary: #64748b;
+    --accent: #0ea5e9;
+    --background: #f8fafc;
+    --white: #ffffff;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-800: #1e293b;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --radius: 8px;
+}
+
+/* Reset and base styles */
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+font-family: 'Inter', system-ui, -apple-system, sans-serif;
+line-height: 1.5;
+background-color: var(--background);
+color: var(--gray-800);
+padding: 2rem;
+}
+
+/* Main container */
+[role="main"] {
+max-width: 1200px;
+margin: 0 auto;
+padding: 2rem;
+}
+
+/* Header styles */
+h1 {
+font-size: 2.5rem;
+font-weight: 700;
+color: var(--primary-dark);
+text-align: center;
+margin-bottom: 3rem;
+}
+
+h2 {
+font-size: 1.8rem;
+color: var(--primary);
+margin-bottom: 1.5rem;
+}
+
+h3 {
+font-size: 1.4rem;
+color: var(--secondary);
+margin-bottom: 1rem;
+}
+
+/* Section styles */
+.section {
+background-color: var(--white);
+border-radius: var(--radius);
+padding: 2rem;
+margin-bottom: 2rem;
+box-shadow: var(--shadow);
+}
+
+/* Form elements */
+input, select {
+width: 100%;
+padding: 0.75rem 1rem;
+border: 1px solid var(--gray-200);
+border-radius: var(--radius);
+margin-bottom: 1rem;
+font-size: 1rem;
+transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus, select:focus {
+outline: none;
+border-color: var(--accent);
+box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+}
+
+/* Button styles */
+button {
+background-color: var(--primary);
+color: var(--white);
+padding: 0.75rem 1.5rem;
+border: none;
+border-radius: var(--radius);
+font-size: 1rem;
+font-weight: 500;
+cursor: pointer;
+transition: background-color 0.2s;
+}
+
+button:hover {
+background-color: var(--primary-dark);
+}
+
+/* Booking sections */
+#booking {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+gap: 2rem;
+}
+
+/* Radio and checkbox styles */
+input[type="radio"],
+input[type="checkbox"] {
+width: auto;
+margin-right: 0.5rem;
+}
+
+/* Booking summary styles */
+#booking-summary {
+background-color: var(--gray-100);
+}
+
+#summary-details {
+padding: 1rem;
+border-radius: var(--radius);
+background-color: var(--white);
+}
+
+/* Footer styles */
+footer {
+text-align: center;
+padding: 2rem 0;
+color: var(--secondary);
+font-size: 0.875rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+body {
+    padding: 1rem;
+}
+
+[role="main"] {
+    padding: 1rem;
+}
+
+.section {
+    padding: 1.5rem;
+}
+
+h1 {
+    font-size: 2rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+}
+
+#booking {
+    grid-template-columns: 1fr;
+}
+}
+
+/* Animations */
+@keyframes fadeIn {
+from {
+    opacity: 0;
+    transform: translateY(10px);
+}
+to {
+    opacity: 1;
+    transform: translateY(0);
+}
+}
+
+.section {
+animation: fadeIn 0.3s ease-out;
+}
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 1rem;
+    text-align: left;
+    box-shadow: var(--shadow);
+    background-color: var(--white);
+    border-radius: var(--radius);
+}
+
+.styled-table thead tr {
+    background-color: var(--primary);
+    color: var(--white);
+    text-align: left;
+}
+
+.styled-table th, .styled-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: var(--gray-100);
+}
+
+.styled-table tbody tr:hover {
+    background-color: var(--gray-200);
+}
+
+
+/* For rounded corners on the table header */
+.styled-table thead {
+    border-radius: var(--radius);
+    overflow: hidden; /* Ensures the corners appear properly */
+}
+
+.styled-table th:first-child {
+    border-top-left-radius: var(--radius);
+}
+
+.styled-table th:last-child {
+    border-top-right-radius: var(--radius);
+}

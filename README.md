@@ -1,5 +1,6 @@
 # **TRIPLAN**
 
+This repository contains all the information necessary to implement the database with a REST API. Please refer to the **DATABASE CREATION** and the **REST API** sections to know more.
 
 ## **DATABASE CREATION**
 
@@ -47,3 +48,6 @@ To properly generate and fill the database, please follow these steps:
     SHOW TABLES;
     ```
 From now on, you can add, delete, update, search, etc any row in your database.
+
+## **REST API**
+To run the Rest API, simply run the file `app.py` after having created the database. Then, you can visit [http://127.0.0.1:5000/](http://127.0.0.1:5000/) to interact with the system.
