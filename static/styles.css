@@ -2,231 +2,273 @@
 :root {
 
     /* Aquamarine Green Shades */
-    --primary: #5BA586;         /* Main Aquamarine Green */
-    --primary-dark: #467A63;    /* Dark Aquamarine Green */
-    --primary-light: #A9D7C0;   /* Light Aquamarine Green */
+    --primary: #5BA586;
+    /* Main Aquamarine Green */
+    --primary-dark: #467A63;
+    /* Dark Aquamarine Green */
+    --primary-light: #A9D7C0;
+    /* Light Aquamarine Green */
 
     /* Neutral Colors */
-    --secondary: #4B5563;       /* Neutral Gray */
-    --background-light: #F4F7F6; /* Light Background */
-    --background-dark: #1F2933; /* Dark Background */
+    --secondary: #4B5563;
+    /* Neutral Gray */
+    --background-light: #d9f1e6;
+    /* Light Background */
+    --background-dark: #1F332A;
+    /* Dark Background */
 
     /* Accent Colors */
-    --accent-gold: #D1A45F;     /* Gold Accent */
-    --accent-blue: #5F99B3;     /* Blue Accent */
-    --error-red: #D9544F;       /* Soft Red */
+    --accent-gold: #D1A45F;
+    /* Gold Accent */
+    --accent-blue: #5F99B3;
+    /* Blue Accent */
+    --error-red: #D9544F;
+    /* Soft Red */
 
-    --white: #ffffff;
+    /* BLUE */
+    --third: #023D54;
 
-    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --white: #FFFFFF;
+
+    --shadow: 4px 4px 6px -1px rgb(0 0 0 / 0.15);
     --radius: 8px;
 }
 
 /* Reset and base styles */
 * {
-margin: 0;
-padding: 0;
-box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-font-family: 'Inter', system-ui, -apple-system, sans-serif;
-line-height: 1.5;
-background-color: var(--white);
-color: var(--secondary);
-padding: 0rem;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    line-height: 1.5;
+    background-color: var(--white);
+    color: var(--secondary);
+    padding: 0rem;
 }
 
 /* Main container */
 [role="main"] {
-max-width: 1200px;
-margin: 0 auto;
-padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
 }
 
 /* Header styles */
 h1 {
-font-size: 2.5rem;
-font-weight: 700;
-color: var(--primary-dark);
-text-align: center;
-margin-bottom: 3rem;
-margin-top: 2rem;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+    text-align: center;
+    margin-bottom: 3rem;
+    margin-top: 2rem;
 }
 
 h2 {
-font-size: 1.8rem;
-color: var(--primary);
-margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+    color: var(--primary-dark);
+    margin-bottom: 1.5rem;
 }
 
 h3 {
-font-size: 1.4rem;
-color: var(--secondary);
-margin-bottom: 1rem;
+    font-size: 1.4rem;
+    color: var(--secondary);
+    margin-bottom: 1rem;
 }
 
 /* Section styles */
 .section {
-background-color: var(--background-light);
-border-radius: var(--radius);
-padding: 2rem;
-margin-bottom: 2rem;
-box-shadow: var(--shadow);
+    background-color: var(--white);
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+    margin: 2rem;
+}
+
+main.section {
+    background-color: var(--background-light);
 }
 
 main.section .options {
     display: flex;
-    flex-direction: row; /* Stack buttons vertically */
-    gap: 1.5rem; /* Space between buttons */
-    width: 100%;    
+    flex-direction: row;
+    /* Stack buttons vertically */
+    gap: 1.5rem;
+    /* Space between buttons */
+    width: 100%;
     /*max-width: 800px; /* Limit the width of the buttons */
     align-items: center;
     justify-content: center;
-    height: 50vh; /* Full viewport height */
+    height: 50vh;
+    /* Full viewport height */
     text-align: center;
 }
 
 main.section .nav-button {
-    background-color: var(--primary); /* Main green color */
-    color: var(--background-light); /* Text color for contrast */
-    font-size: 2rem; /* Larger font size for emphasis */
-    font-weight: bold; /* Bold text for better visibility */
-    padding: 1rem 2rem; /* Increase padding for larger buttons */
+    background-color: var(--primary-dark);
+    /* Main green color */
+    color: var(--white);
+    /* Text color for contrast */
+    font-size: 2rem;
+    /* Larger font size for emphasis */
+    font-weight: bold;
+    /* Bold text for better visibility */
+    padding: 1rem 2rem;
+    /* Increase padding for larger buttons */
     border: none;
-    border-radius: 8px; /* Rounded corners */
+    border-radius: var(--radius);
+    /* Rounded corners */
     cursor: pointer;
     text-align: center;
     transition: background-color 0.3s ease, transform 0.2s ease;
-    flex: 1; /* Ensure buttons share equal width */
-    max-width: 500px; /* Optional: Cap the width of individual buttons */
+    flex: 1;
+    /* Ensure buttons share equal width */
+    max-width: 500px;
+    /* Optional: Cap the width of individual buttons */
 }
 
 main.section .nav-button:hover {
-    background-color: var(--primary-dark); /* Darker green on hover */
-    transform: scale(1.05); /* Slight zoom effect on hover */
+    background-color: var(--background-dark);
+    /* Darker green on hover */
+    transform: scale(1.05);
+    /* Slight zoom effect on hover */
 }
 
 main.section .nav-button:active {
-    transform: scale(0.95); /* Slight shrink on click */
+    transform: scale(0.95);
+    /* Slight shrink on click */
 }
 
 /* Form elements */
-input, select {
-width: 100%;
-background-color: var(--background-light);
-padding: 0.75rem 1rem;
-border: 1px solid var(--background-light);
-border-radius: var(--radius);
-margin-bottom: 1rem;
-font-size: 1rem;
-transition: border-color 0.2s, box-shadow 0.2s;
+input,
+select {
+    width: 100%;
+    background-color: var(--background-light);
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--background-light);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 #manage-bookings-form input[type="text"] {
-    background-color: var(--white); /* Light blue color or your desired color */
-    border: 1px solid var(--primary);
+    background-color: var(--white);
+    /* Light blue color or your desired color */
+    border: 1px solid var(--primary-light);
 }
 
 
-input:focus, select:focus {
-outline: none;
-border-color: var(--accent-blue);
-box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+input:focus,
+select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
 }
 
 /* Button styles */
 button {
-background-color: var(--primary);
-color: var(--white);
-padding: 0.75rem 1.5rem;
-border: none;
-border-radius: var(--radius);
-font-size: 1rem;
-font-weight: 500;
-cursor: pointer;
-transition: background-color 0.2s;
+    background-color: var(--primary-dark);
+    color: var(--white);
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
 button:hover {
-background-color: var(--primary-dark);
+    background-color: var(--background-dark);
 }
 
 /* Booking sections */
 #booking {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-gap: 2rem;
+    /* display: grid; */
+    /* grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); */
+    /* gap: 2rem; */
+    box-shadow: none;
 }
 
 /* Radio and checkbox styles */
 input[type="radio"],
 input[type="checkbox"] {
-width: auto;
-margin-right: 0.5rem;
+    width: auto;
+    margin-right: 0.5rem;
 }
 
 /* Booking summary styles */
 #booking-summary {
-background-color: var(--background-light);
+    background-color: var(--background-light);
+}
+
+#booking-summary-2 {
+    background-color: var(--background-light);
 }
 
 #summary-details {
-padding: 1rem;
-border-radius: var(--radius);
-background-color: var(--white);
+    padding: 1rem;
+    border-radius: var(--radius);
+    background-color: var(--white);
 }
 
 /* Footer styles */
 footer {
-text-align: center;
-padding: 2rem 0;
-color: var(--secondary);
-font-size: 0.875rem;
+    text-align: center;
+    padding: 0.5rem 0;
+    color: var(--secondary);
+    font-size: 0.875rem;
+    /* background-color: var(--third); */
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
-body {
-    padding: 0rem;
-}
+    body {
+        padding: 0rem;
+    }
 
-[role="main"] {
-    padding: 1rem;
-}
+    [role="main"] {
+        padding: 1rem;
+    }
 
-.section {
-    padding: 1.5rem;
-}
+    .section {
+        padding: 1.5rem;
+    }
 
-h1 {
-    font-size: 2rem;
-}
+    h1 {
+        font-size: 2rem;
+    }
 
-h2 {
-    font-size: 1.5rem;
-}
+    h2 {
+        font-size: 1.5rem;
+    }
 
-#booking {
-    grid-template-columns: 1fr;
-}
+    #booking {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Animations */
 @keyframes fadeIn {
-from {
-    opacity: 0;
-    transform: translateY(10px);
-}
-to {
-    opacity: 1;
-    transform: translateY(0);
-}
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .section {
-animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.3s ease-out;
 }
+
 .styled-table {
     width: 100%;
     border-collapse: collapse;
@@ -244,13 +286,30 @@ animation: fadeIn 0.3s ease-out;
     text-align: left;
 }
 
-.styled-table th, .styled-table td {
+.styled-table th,
+.styled-table td {
     padding: 12px 15px;
-    border-bottom: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--primary-light);
+}
+
+.styled-table tr:last-of-type td:first-child {
+    border-bottom-left-radius: var(--radius);
+    /* Round the bottom-left corner */
+}
+
+.styled-table tr:last-of-type td:last-child {
+    border-bottom-right-radius: var(--radius);
+    /* Round the bottom-right corner */
+}
+
+.styled-table tr:last-of-type td {
+    padding: 12px 15px;
+    border-bottom: none;
+    /* Remove the original bottom border */
 }
 
 .styled-table tbody tr:nth-of-type(even) {
-    background-color: var(--background-light);
+    background-color: var(--white);
 }
 
 .styled-table tbody tr:hover {
@@ -261,7 +320,8 @@ animation: fadeIn 0.3s ease-out;
 /* For rounded corners on the table header */
 .styled-table thead {
     border-radius: var(--radius);
-    overflow: hidden; /* Ensures the corners appear properly */
+    overflow: hidden;
+    /* Ensures the corners appear properly */
 }
 
 .styled-table th:first-child {
@@ -286,19 +346,19 @@ animation: fadeIn 0.3s ease-out;
 
 .modal-content {
     position: relative;
-    background-color: --white;
+    /*background-color: var(--white);*/
     margin: 5% auto;
     padding: 0;
-    width: 80%;
-    max-width: 800px;
-    border-radius: 8px;
+    width: 100%;
+    max-width: 1000px;
+    border-radius: var(--radius);
     overflow: hidden;
 }
 
 .close {
     position: absolute;
-    right: 20px;
-    top: 10px;
+    right: 50px;
+    top: 35px;
     font-size: 28px;
     cursor: pointer;
     color: var(--secondary);
@@ -307,6 +367,7 @@ animation: fadeIn 0.3s ease-out;
 .client-sections {
     display: flex;
     min-height: 400px;
+    /* width: 100%; */
 }
 
 .section {
@@ -315,13 +376,13 @@ animation: fadeIn 0.3s ease-out;
 }
 
 
-.section:first-child {
+/* .section:first-child {
     border-right: 1px solid var(--primary);
 }
 
 .section:nth-child(2){
     border-left: 1px solid var(--primary);
-}
+} */
 
 .section h2 {
     color: var(--primary-dark);
@@ -341,31 +402,31 @@ animation: fadeIn 0.3s ease-out;
 .form-group input {
     width: 100%;
     padding: 0.5rem;
-    border: 1px solid #cbd5e0;
-    border-radius: 4px;
+    border: 1px solid var(--primary-light);
+    border-radius: var(--radius);
     margin-bottom: 1rem;
 }
 
 .submit-btn {
-    background-color: var(--primary);
+    background-color: var(--primary-dark);
     color: white;
     padding: 0.5rem 1rem;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius);
     cursor: pointer;
     width: 100%;
 }
 
 .submit-btn:hover {
-    background-color: var(--primary-dark);
+    background-color: var(--background-dark);
 }
 
 .success-message {
     display: none;
     color: #2f855a;
-    background-color: #f0fff4;
+    background-color: #c1f7c4;
     padding: 1rem;
-    border-radius: 4px;
+    border-radius: var(--radius);
     margin-top: 1rem;
     text-align: center;
 }
@@ -373,16 +434,16 @@ animation: fadeIn 0.3s ease-out;
 .failed-message {
     display: none;
     color: #852f2f;
-    background-color: #fff0f0;
+    background-color: #ffdada;
     padding: 1rem;
-    border-radius: 4px;
+    border-radius: var(--radius);
     margin-top: 1rem;
     text-align: center;
 }
 
 #clientInfoModal .modal-content {
     position: relative;
-    background-color: var(--white);
+    background-color: var(--background-light);
     margin: 10% auto;
     padding: 2rem;
     width: 80%;
@@ -406,7 +467,7 @@ animation: fadeIn 0.3s ease-out;
 
 #clientInfoModal h2 {
     margin-bottom: 1.5rem;
-    color: var(--primary);
+    color: var(--primary-dark);
 }
 
 .client-info-btn {
@@ -441,7 +502,7 @@ animation: fadeIn 0.3s ease-out;
 }
 
 .logout-btn:hover {
-    background-color: var(--background-dark);
+    background-color: var(--error-red);
 }
 
 .portal-logo {

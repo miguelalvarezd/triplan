@@ -187,8 +187,11 @@ document.getElementById('booking-form').addEventListener('submit', async (e) => 
 
 function manageBookings(event) {
     event.preventDefault();
-    
+
     const bookingCode = document.getElementById('booking-code').value;
+    const summaryTable = document.getElementById('summary-table-2');
+    const tableBody = summaryTable.querySelector('tbody');
+    const noBookingsMessage = document.getElementById('no-bookings-message-2');
 
     fetch(`http://localhost:5000/api/bookings/code/${bookingCode}`, {
         method: 'GET',
@@ -196,9 +199,8 @@ function manageBookings(event) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
+        if (data.success && data.booking) {
             const booking = data.booking;
-            const tableBody = document.querySelector('#summary-table-2 tbody');
             tableBody.innerHTML = ''; // Clear existing rows
 
             const row = document.createElement('tr');
@@ -209,14 +211,19 @@ function manageBookings(event) {
                 <td>${booking.end_date || 'N/A'}</td>
             `;
             tableBody.appendChild(row);
-            
+
+            // Show table and hide "no bookings" message
+            summaryTable.style.display = 'table'; // Use 'table' to properly display the element
+            noBookingsMessage.style.display = 'none';
         } else {
-            alert(data.message);
+            // Hide table and show "no bookings" message
+            summaryTable.style.display = 'none';
+            noBookingsMessage.style.display = 'block';
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred during login. Please try again.');
+        alert('An error occurred while searching for the booking.');
     });
 }
 
@@ -231,6 +238,11 @@ function closeClientModal() {
     document.getElementById('clientModal').style.display = 'none';
     document.getElementById('loginForm').reset();
     document.getElementById('newClientForm').reset();
+    document.getElementById('loginSuccess').style.display = 'none';
+    document.getElementById('loginFailed').style.display = 'none';
+    document.getElementById('registrationSuccess').style.display = 'none';
+    document.getElementById('registrationFailed').style.display = 'none';
+
 }
 
 // Handle login form submission

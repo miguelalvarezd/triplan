@@ -2,9 +2,12 @@
 
 This repository contains all the information necessary to implement the database with a REST API. Please refer to the **DATABASE CREATION** and the **REST API** sections to know more.
 
+![Triplan Logo](logo.png)
+
+
 ## **DATABASE CREATION**
 
-The files in this folder are used to generate and fill the database for our ***TRIPLAN*** travel agency. Please, read the whole document to know how to properly use these files.
+The files in the `create_db` folder are used to generate and fill the database for our ***TRIPLAN*** travel agency. Please, read the whole document to know how to properly use these files.
 
 ### **REQUIREMENTS**
 To create and fill the database you need to have **Python** installed on your PC.
@@ -50,4 +53,4 @@ To properly generate and fill the database, please follow these steps:
 From now on, you can add, delete, update, search, etc any row in your database.
 
 ## **REST API**
-To run the Rest API, simply run the file `app.py` after having created the database. Then, you can visit [http://127.0.0.1:5000/](http://127.0.0.1:5000/) to interact with the system.
+To run the Rest API, simply run the file `app.py`. Make sure that you have successfully created the database. Then, you can visit [http://127.0.0.1:5000/](http://127.0.0.1:5000/) to interact with the system.
