@@ -23,8 +23,8 @@ import mysql.connector
 ####################################
 
 mysql_password = "1075"             # The password to your mysql server
-sql_file_path = 'triplan.sql'       # Path to the SQL file that will create the DATABASE and TABLES
-excel_file_path = 'triplan.xlsx'    # Path to the Excel file with all the VALUES that will be used to fill the database
+sql_file_path = 'create_db/triplan.sql'       # Path to the SQL file that will create the DATABASE and TABLES
+excel_file_path = 'create_db/triplan.xlsx'    # Path to the Excel file with all the VALUES that will be used to fill the database
 
 
 ####################################
@@ -83,6 +83,8 @@ try:
         # Define table name (use sheet name)
         table_name = sheet_name.replace(" ", "_").lower()
 
+        print("Sheet to insert:", table_name)
+
         # Insert data into the table
         for _, row in df.iterrows():
             row_data = []
@@ -105,7 +107,7 @@ try:
                 
                 row_data.append(value)
 
-            print("Row data to insert:", row_data)
+            # print("Row data to insert:", row_data)
 
             # Prepare the column names and placeholders for SQL insertion
             columns = ", ".join([f"{col.replace(' ', '_').lower()}" for col in df.columns])

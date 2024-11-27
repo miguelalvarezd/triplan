@@ -17,6 +17,10 @@ CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 def serve_index():
     return send_from_directory('static', 'index.html')
 
+################
+### CLIENTS  ###
+################
+
 # Client login
 @app.route('/api/customers/login', methods=['POST'])
 def login_customer():
@@ -82,6 +86,10 @@ def get_customer(dni):
     except Exception as ex:
         return jsonify({'message': 'Error fetching customer', 'success': False, 'error': str(ex)})
 
+################
+### BOOKINGS ###
+################
+
 # Create a booking
 @app.route('/api/bookings', methods=['POST'])
 def create_booking():
@@ -102,8 +110,8 @@ def create_booking():
     except Exception as ex:
         return jsonify({'message': 'Error creating booking', 'success': False, 'error': str(ex)})
 
-# Manage booking by booking code
-@app.route('/api/bookings/<booking_code>', methods=['GET'])
+# Get a single booking by its booking code
+@app.route('/api/bookings/code/<booking_code>', methods=['GET'])
 def get_booking(booking_code):
     try:
         cursor = conexion.connection.cursor()
@@ -126,6 +134,33 @@ def get_booking(booking_code):
             return jsonify({'message': 'Booking not found', 'success': False})
     except Exception as ex:
         return jsonify({'message': 'Error fetching booking', 'success': False, 'error': str(ex)})
+
+# Get all bookings for a client by DNI
+@app.route('/api/bookings/client/<dni>', methods=['GET'])
+def get_bookings_client(dni):
+    try:
+        cursor = conexion.connection.cursor()
+        sql = "SELECT * FROM RESERVAS WHERE DNI = %s"
+        cursor.execute(sql, (dni,))
+        bookings = cursor.fetchall()
+
+        if bookings:
+            return jsonify({
+                'bookings': [
+                    {
+                        'id': booking[0],
+                        'dni': booking[1],
+                        'start_date': booking[2],
+                        'end_date': booking[3],
+                    } for booking in bookings
+                ],
+                'message': 'Bookings found',
+                'success': True
+            })
+        else:
+            return jsonify({'message': 'No bookings found for this client', 'success': False})
+    except Exception as ex:
+        return jsonify({'message': 'Error fetching bookings', 'success': False, 'error': str(ex)})
 
 if __name__ == '__main__':
     app.run(debug=True)

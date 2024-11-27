@@ -14,7 +14,7 @@
 
     <main class="section">
         <h2>Welcome to Triplan</h2>
-        <p>Your gateway to effortless travel planning. Choose an option below to get started.</p>
+        <h3>Your gateway to effortless travel planning. Choose an option below to get started.</h3>
 
         <div class="options">
             <button class="nav-button" onclick="openClientModal()">Client Portal</button>
@@ -53,12 +53,12 @@
                     <h2>New Clients</h2>
                     <form id="newClientForm" onsubmit="handleNewClient(event)">
                         <div class="form-group">
-                            <label for="name">Full Name</label>
+                            <label for="name">Name</label>
                             <input type="text" id="name" required>
                         </div>
                         <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" required>
+                            <label for="dni">DNI</label>
+                            <input type="text" id="dni" pattern=".{9}" title="DNI must be exactly 9 characters" required>
                         </div>
                         <div class="form-group">
                             <label for="phone">Phone Number</label>
@@ -67,6 +67,9 @@
                         <button type="submit" class="submit-btn">Register</button>
                         <div id="registrationSuccess" class="success-message">
                             Registration successful! Redirecting to dashboard...
+                        </div>
+                        <div id="registrationFailed" class="failed-message">
+                            Registration failed. User already exists.
                         </div>
                     </form>
                 </div>
