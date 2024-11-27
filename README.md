@@ -22,6 +22,11 @@ You can install them by running the following command on your command prompt:
 pip install pandas numpy mysql-connector-python
 ```
 
+Additionally, you can install all of them, including the ones needed for the REST API, using the `requirements.txt` file provided:
+```
+pip install -r requirements.txt
+```
+
 ### **HOW TO USE**
 To properly generate and fill the database, please follow these steps:
 
@@ -53,4 +58,8 @@ To properly generate and fill the database, please follow these steps:
 From now on, you can add, delete, update, search, etc any row in your database.
 
 ## **REST API**
-To run the Rest API, simply run the file `app.py`. Make sure that you have successfully created the database. Then, you can visit [http://127.0.0.1:5000/](http://127.0.0.1:5000/) to interact with the system.
+Before runnig the REST API, make sure that you have successfully created the database. Then, install all the necessary libraries:
+```
+pip install -r requirements.txt
+```
+To run the REST API, simply run the file `app.py`. Then, you can visit [http://127.0.0.1:5000/](http://127.0.0.1:5000/) to interact with the system.
