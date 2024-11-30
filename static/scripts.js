@@ -1,5 +1,6 @@
 // CLIENT PORTAL SCRIPTS
-// alert("scripts.js is loaded!");
+let currentRouteID = null;
+const bookFlightModal = document.getElementById('bookFlightModal');
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Identify the current page based on unique elements
@@ -218,7 +219,6 @@ async function populateBookingSummary() {
         // Updated endpoint URL
         const response = await fetch(`http://localhost:5000/api/bookings/client/${dni}`);
         const data = await response.json();
-        console.log('Booking data received:', data);
 
         const tableBody = summaryTable.querySelector('tbody');
         if (!tableBody) {
@@ -241,8 +241,11 @@ async function populateBookingSummary() {
                     <td>${booking.dni}</td>
                     <td>${startDate}</td>
                     <td>${endDate}</td>
-                    <td>
-                        <button id='cancel-booking' onclick="openCancelBookingModal('${booking.id}')">Cancel Booking</button>
+                    <td style='text-align: center;'>
+                        <div class='booking-actions'>
+                            <button id='booking-details' onclick="openBookingDetailsModal('${booking.id}')">Show Details</button>
+                            <button id='cancel-booking' onclick="openCancelBookingModal('${booking.id}')">Cancel Booking</button>
+                        </div>
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -299,14 +302,11 @@ async function cancelBooking() {
     }
 }
 
-
-
 window.openCancelBookingModal = (bookingID) => {
     currentBookingID = bookingID;
     modalBookingID.textContent = bookingID;
     cancelBookingModal.style.display = 'block';
 };
-
 
 // Close the modal
 window.closeCancelBookingModal = () => {
@@ -314,6 +314,105 @@ window.closeCancelBookingModal = () => {
     document.getElementById('cancel-booking-success').style.display = 'none';
     document.getElementById('cancel-booking-fail').style.display = 'none';
 };
+
+// Open Booking Details Modal
+function openBookingDetailsModal(bookingID) {
+    document.getElementById('details-booking-id').textContent = bookingID;
+    document.getElementById('bookingDetailsModal').style.display = 'block';
+    fetchBookingDetails(bookingID);
+}
+
+// Close Booking Details Modal
+function closeBookingDetailsModal() {
+    const sections = {
+        flights: { table: 'details-flights-table', message: 'no-flights-message' },
+        hotels: { table: 'details-hotels-table', message: 'no-hotels-message' },
+        cars: { table: 'details-cars-table', message: 'no-cars-message' },
+    };
+
+    // Clear and hide all sections
+    for (const key in sections) {
+        const table = document.getElementById(sections[key].table);
+        const tableBody = table.querySelector('tbody');
+        const message = document.getElementById(sections[key].message);
+
+        tableBody.innerHTML = ''; // Clear table content
+        table.style.display = 'none'; // Hide table
+        message.style.display = 'none'; // Hide "No data" message
+    }
+
+    // Hide the modal
+    document.getElementById('bookingDetailsModal').style.display = 'none';
+}
+
+// Fetch Booking Details
+async function fetchBookingDetails(bookingID) {
+    const endpoints = {
+        flights: `http://localhost:5000/api/flights/booking/${bookingID}`,
+        hotels: `http://localhost:5000/api/hotels/booking/${bookingID}`,
+        cars: `http://localhost:5000/api/cars/booking/${bookingID}`,
+    };
+
+    const sections = {
+        flights: { table: 'details-flights-table', message: 'no-flights-message' },
+        hotels: { table: 'details-hotels-table', message: 'no-hotels-message' },
+        cars: { table: 'details-cars-table', message: 'no-cars-message' },
+    };
+
+    try {
+        // Fetch all data in parallel
+        const responses = await Promise.all(
+            Object.entries(endpoints).map(([key, url]) => fetch(url).then(res => res.json()))
+        );
+
+        responses.forEach((data, index) => {
+            const key = Object.keys(endpoints)[index];
+            const tableBody = document.getElementById(sections[key].table).querySelector('tbody');
+            const table = document.getElementById(sections[key].table);
+            const message = document.getElementById(sections[key].message);
+
+            tableBody.innerHTML = ''; // Clear old data
+            table.style.display = 'none'; // Hide table by default
+            message.style.display = 'none'; // Hide "No data" message
+
+            if (data.success && data[key] && data[key].length > 0) {
+                tableBody.innerHTML = data[key]
+                    .map(item => {
+                        if (key === 'flights') {
+                            return `<tr>
+                                <td>${item.id_vuelo}</td>
+                                <td>${item.id_reserva}</td>
+                                <td>${item.numero_billete}</td>
+                                <td>${item.numero_asiento || 'N/A'}</td>
+                            </tr>`;
+                        } else if (key === 'hotels') {
+                            return `<tr>
+                                <td>${item.id_reserva}</td>
+                                <td>${item.id_hotel}</td>
+                                <td>${item.numero_habitacion || 'N/A'}</td>
+                            </tr>`;
+                        } else if (key === 'cars') {
+                            return `<tr>
+                                <td>${item.id_reserva}</td>
+                                <td>${item.matricula_coche}</td>
+                            </tr>`;
+                        }
+                    })
+                    .join('');
+                table.style.display = 'table'; // Show table
+            } else {
+                message.style.display = 'block'; // Show "No data" message
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching booking details:', error);
+        for (const key in sections) {
+            const message = document.getElementById(sections[key].message);
+            message.textContent = `Error loading ${key}. Please try again later.`;
+            message.style.display = 'block';
+        }
+    }
+}
 
 document.getElementById('new-customer-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -527,46 +626,44 @@ function closeTables() {
 function searchFlights(event) {
     event.preventDefault();
 
-    const cityName = document.getElementById('city-name').value;
+    const cityOrigin = document.getElementById('city-origin').value;
+    const cityDestination = document.getElementById('city-destination').value;
+
     const flightsTable = document.getElementById('flights-table');
     const tableBody = flightsTable.querySelector('tbody');
-    const noFlightsMessage = document.getElementById('no-flights-message');
-    // const closeButton = document.getElementById('close-tables-button') || createCloseButton();
+    const noFlightsMessage = document.getElementById('no-flights-message-2');
 
-    // Related sections
-    // const relatedSections = document.querySelectorAll('#flights-section, #hotels-section, #cars-section');
-
-    // Clear previous booking summary and hide related sections
+    // Clear previous results
     tableBody.innerHTML = '';
     flightsTable.style.display = 'none';
     noFlightsMessage.style.display = 'none';
-    // relatedSections.forEach(section => section.style.display = 'none');
-    // closeButton.style.display = 'none';
 
-    fetch(`http://localhost:5000//api/airports/${cityName}`, {
-        method: 'GET',
+    // Send data via GET or POST
+    fetch(`http://localhost:5000/api/flights/route?origin=${encodeURIComponent(cityOrigin)}&destination=${encodeURIComponent(cityDestination)}`, {
+        method: 'GET', // Use GET for retrieving data
         headers: { 'Content-Type': 'application/json' },
     })
     .then(response => response.json())
     .then(data => {
         if (data.success && data.flights) {
             data.flights.forEach(flight => {
-                // console.log(flight)
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${flight.id_trayecto}</td>
+                    <td>${flight.origen}</td>
                     <td>${flight.destino}</td>
+                    <td>${flight.hora_salida}</td>
+                    <td>${flight.hora_llegada}</td>
+                    <td>
+                        <button id='book-button' onclick="openBookFlightModal('${flight.id_trayecto}')">Book</button>
+                    </td>
                 `;
                 tableBody.appendChild(row);
             });
 
             flightsTable.style.display = 'table';
-            // Show related sections and close button if booking is found
-            // relatedSections.forEach(section => section.style.display = 'block');
-            // closeButton.style.display = 'block';
         } else {
-            // Show error message dynamically
-            noFlightsMessage.textContent = data.message || 'ERROR 3L3FANT3S.';
+            noFlightsMessage.textContent = data.message || 'No flights found.';
             noFlightsMessage.style.display = 'block';
         }
     })
@@ -575,80 +672,172 @@ function searchFlights(event) {
         noFlightsMessage.textContent = 'Error loading flights. Please try again later.';
         noFlightsMessage.style.display = 'block';
     });
-
-    // Fetch related details (flights, hotels, cars)
-    // const sections = {
-    //     flights: {
-    //         table: document.getElementById('flights-table'),
-    //         message: document.getElementById('no-flights-message')
-    //     },
-    //     hotels: {
-    //         table: document.getElementById('hotels-table'),
-    //         message: document.getElementById('no-hotels-message')
-    //     },
-    //     cars: {
-    //         table: document.getElementById('cars-table'),
-    //         message: document.getElementById('no-cars-message')
-    //     }
-    // };
-
-    // Object.values(sections).forEach(section => {
-    //     section.table.querySelector('tbody').innerHTML = '';
-    //     section.table.style.display = 'none';
-    //     section.message.style.display = 'none';
-    // });
-
-    // const endpoints = {
-    //     flights: `http://localhost:5000/api/flights/booking/${bookingCode}`,
-    //     hotels: `http://localhost:5000/api/hotels/booking/${bookingCode}`,
-    //     cars: `http://localhost:5000/api/cars/booking/${bookingCode}`
-    // };
-
-    // for (const [key, url] of Object.entries(endpoints)) {
-    //     fetch(url, {
-    //         method: 'GET',
-    //         headers: { 'Content-Type': 'application/json' }
-    //     })
-    //     .then(response => response.json())
-    //     .then(data => {
-    //         const section = sections[key];
-
-    //         if (data.success && data[key] && data[key].length > 0) {
-    //             const tbody = section.table.querySelector('tbody');
-    //             tbody.innerHTML = data[key].map(item => {
-    //                 if (key === 'flights') {
-    //                     return `<tr>
-    //                         <td>${item.id_vuelo}</td>
-    //                         <td>${item.id_reserva}</td>
-    //                         <td>${item.numero_billete}</td>
-    //                         <td>${item.numero_asiento || 'N/A'}</td>
-    //                     </tr>`;
-    //                 } else if (key === 'hotels') {
-    //                     return `<tr>
-    //                         <td>${item.id_reserva}</td>
-    //                         <td>${item.id_hotel}</td>
-    //                         <td>${item.numero_habitacion || 'N/A'}</td>
-    //                     </tr>`;
-    //                 } else if (key === 'cars') {
-    //                     return `<tr>
-    //                         <td>${item.id_reserva}</td>
-    //                         <td>${item.matricula_coche}</td>
-    //                     </tr>`;
-    //                 }
-    //             }).join('');
-
-    //             section.table.style.display = 'table';
-    //         } else {
-    //             section.message.style.display = 'block';
-    //         }
-    //     })
-    //     .catch(error => {
-    //         console.error(`Error fetching ${key}:`, error);
-    //         sections[key].message.textContent = `Error loading ${key}. Please try again later.`;
-    //         sections[key].message.style.display = 'block';
-    //     });
-    // }
 }
+
+function openBookFlightModal(RouteID) {
+    currentRouteID = RouteID;
+    document.getElementById('seat-selection').style.display = 'none';
+    document.getElementById('continue-button').style.display = 'inline-block';
+    document.getElementById('confirm-button').style.display = 'none';
+    bookFlightModal.style.display = 'block';
+}
+
+function closeBookFlightModal() {
+    currentRouteID = null;
+    bookFlightModal.style.display = 'none';
+    document.getElementById('book-flight-form').reset();
+    document.getElementById('booking-success').style.display = 'none';
+    document.getElementById('booking-fail').style.display = 'none';
+}
+
+function handleContinue() {
+    const departureDate = document.getElementById('departure-date').value;
+
+    // Validate the date field
+    if (!departureDate) {
+        alert('Please select a departure date.');
+        return;
+    }
+
+    // Hide the continue button and show the confirm booking button and seat selection
+    document.getElementById('continue-button').style.display = 'none';
+    document.getElementById('seat-selection').style.display = 'block';
+    document.getElementById('confirm-button').style.display = 'inline-block';
+
+    // Populate seat selection (example: fetch available seats from API)
+    populateSeats(departureDate);
+}
+
+async function populateSeats(departureDate) {
+    try {
+        const response = await fetch(`http://localhost:5000/api/flights/check/${currentRouteID}/${departureDate}`);
+        const data = await response.json();
+
+        if (data.success && data.available_seats) {
+            const seatSelect = document.getElementById('seat-number');
+            seatSelect.innerHTML = ''; // Clear previous options
+            data.available_seats.forEach(seat => {
+                const option = document.createElement('option');
+                option.value = seat;
+                option.textContent = `Seat ${seat}`;
+                seatSelect.appendChild(option);
+            });
+        } else {
+            alert(data.message || 'No seats available.');
+        }
+    } catch (error) {
+        console.error('Error fetching seats:', error);
+    }
+}
+
+async function submitBooking() {
+    const departureDate = document.getElementById('departure-date').value;
+    const seatNumber = document.getElementById('seat-number').value;
+
+    if (!seatNumber) {
+        alert('Please select a seat.');
+        return;
+    }
+
+    let createdFlightID = null;
+
+    try {
+        const response = await fetch('http://localhost:5000/api/flights/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                date: departureDate,
+                id_trayecto: currentRouteID,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            createdFlightID = data.id_vuelo;
+            document.getElementById('booking-fail').style.display = 'none';
+        } else {
+            document.getElementById('booking-fail').textContent = data.message || 'Flight creation failed.';
+            document.getElementById('booking-fail').style.display = 'block';
+            return;
+        }
+
+    } catch (error) {
+        console.error('Error creating flight:', error);
+        document.getElementById('booking-fail').textContent = 'An error occurred during flight creation.';
+        document.getElementById('booking-fail').style.display = 'block';
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:5000/api/booking/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                DNI: localStorage.getItem('customerDNI'),
+                FECHA_INICIO: departureDate,
+                FECHA_FINAL: departureDate,
+                ID_VUELO: createdFlightID,
+                NUMERO_ASIENTO: seatNumber,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Hide the form and show booking summary
+            document.getElementById('book-flight-form').style.display = 'none';
+            document.getElementById('booking-success').style.display = 'none';
+        
+            // Populate booking summary
+            const summary = `
+                <h3>Flight booked successfully!</h3>
+                <p><strong>Booking ID:</strong> ${data.id_reserva}</p>
+                <p><strong>Flight ID:</strong> ${data.id_vuelo}</p>
+                <p><strong>Ticket Number:</strong> ${data.numero_billete}</p>
+                <p><strong>Departure Date:</strong> ${data.fecha_inicio}</p>
+                <p><strong>Seat Number:</strong> ${data.numero_asiento}</p>
+            `;
+            const summaryDetails = document.getElementById('summary-details');
+            summaryDetails.innerHTML = summary;
+        
+            // Show the summary section
+            const bookingSummary = document.getElementById('booking-summary-content');
+            bookingSummary.style.display = 'block';
+        } else {
+            document.getElementById('booking-fail').textContent = data.message || 'Booking failed.';
+            document.getElementById('booking-fail').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error submitting booking:', error);
+        document.getElementById('booking-fail').textContent = 'An error occurred during booking.';
+        document.getElementById('booking-fail').style.display = 'block';
+    }
+
+    populateBookingSummary();
+}
+
+function closeSummary() {
+    const bookingSummary = document.getElementById('booking-summary-content');
+    bookingSummary.style.display = 'none';
+    closeBookFlightModal();
+    document.getElementById('book-flight-form').style.display = 'block';    
+}
+
+function printSummary() {
+    const summaryDetails = document.getElementById('summary-details').innerHTML;
+
+    // Open a new window and print the summary
+    const printWindow = window.open('', '', 'height=500,width=800');
+    printWindow.document.write('<html><head><title>Booking Summary</title></head><body>');
+    printWindow.document.write('<h2>Booking Summary</h2>');
+    printWindow.document.write(summaryDetails);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    // printWindow.print();
+}
+
+
 
 
 

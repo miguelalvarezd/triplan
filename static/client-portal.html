@@ -73,11 +73,11 @@
                 <table id="summary-table" class="styled-table">
                     <thead>
                         <tr>
-                            <th>Booking ID</th>
-                            <th>DNI</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Actions</th>
+                            <th style="width: 19%;">Booking ID</th>
+                            <th style="width: 19%;">DNI</th>
+                            <th style="width: 19%;">Start Date</th>
+                            <th style="width: 19%;">End Date</th>
+                            <th style="width: 24%;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -89,12 +89,103 @@
                 </div>
             </div>
 
+            <!-- Modal for booking details -->
+            <div id="bookingDetailsModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeBookingDetailsModal()">&times;</span>
+                    <h2>Booking Details for ID: <span id="details-booking-id"></span></h2>
+                    
+                    <section>
+                        <div id="details-flights-section">
+                            <h3>Flights</h3>
+                            <table id="details-flights-table" class="styled-table" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Flight ID</th>
+                                        <th>Booking ID</th>
+                                        <th>Ticket Number</th>
+                                        <th>Seat Number</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <div id="no-flights-message" style="display: none; text-align: center; padding: 1rem;">No flights found for this booking.</div>
+                        </div>
+                        <div id="details-hotels-section">
+                            <h3>Hotels</h3>
+                            <table id="details-hotels-table" class="styled-table" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Booking ID</th>
+                                        <th>Hotel ID</th>
+                                        <th>Room Number</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <div id="no-hotels-message" style="display: none; text-align: center; padding: 1rem;">No hotels found for this booking.</div>
+                        </div>
+                        <div id="details-cars-section">
+                            <h3>Cars</h3>
+                            <table id="details-cars-table" class="styled-table" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Booking ID</th>
+                                        <th>License Plate</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <div id="no-cars-message" style="display: none; text-align: center; padding: 1rem;">No cars found for this booking.</div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <div id="bookFlightModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeBookFlightModal()">&times;</span>
+                    <h2>Book Flight</h2>
+                    <form id="book-flight-form">
+                        <label for="departure-date">Departure Date:</label>
+                        <input type="date" id="departure-date" required>
+                        
+                        <!-- Continue Button -->
+                        <button type="button" id="continue-button" onclick="handleContinue()">Continue</button>
+                        
+                        <div id="seat-selection" style="display: none;">
+                            <label for="seat-number">Select Seat Number:</label>
+                            <select id="seat-number"></select>
+                        </div>
+                        
+                        <!-- Confirm Booking Button -->
+                        <button type="button" id="confirm-button" style="display: none;" onclick="submitBooking()">Confirm Booking</button>
+                    </form>
+                    <div id="booking-success" class="success-message" style="display: none;">Booking Successful!</div>
+                    <div id="booking-fail" class="failed-message" style="display: none;">Booking Failed. Please try again.</div>
+                    <div id="booking-summary-content" style="display: none;">
+                        <!-- Booking details will be dynamically populated here -->
+                        <div id="summary-details"></div>
+                        <div class="summary-buttons">
+                            <button type="button" onclick="printSummary()">Print</button>
+                            <button id='close-booking-summary' type="button" onclick="closeSummary()">Close</button>
+                        </div>
+                    </div>
+                                       
+                </div>
+            </div>
+            
+            
+
             <div id="search-flights" class="section">
                 <!-- <h2>Booking Summary</h2> -->
                 <h2>Search for Flights</h2>
                 <form id="search-flights-form" onsubmit="searchFlights(event)">
-                    <label for="city-name">Where do you want to go?</label>
-                    <input type="text" id="city-name" name="city-name" required>
+                    <label for="city-origin">Where are you traveling from?</label>
+                    <input type="text" id="city-origin" name="city-origin" required>
+
+                    <label for="city-destination">Where do you want to go?</label>
+                    <input type="text" id="city-destination" name="city-destination" required>
 
                     <button type="submit">Find Flights</button>
                 </form>
@@ -102,122 +193,20 @@
                     <thead>
                         <tr>
                             <th>Flight ID</th>
+                            <th>Origin</th>
                             <th>Destination</th>
+                            <th>Departure Time</th>
+                            <th>Arrival Time</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <!-- Bookings will be populated here dynamically -->
                     </tbody>
                 </table>
-                <div id="no-flights-message" style="display: none; text-align: center; padding: 1rem;">
+                <div id="no-flights-message-2" style="display: none; text-align: center; padding: 1rem;">
                     No flights found near this city.
                 </div>
-
-                <!-- <h2>Related Booking Details</h2> -->
-
-                <!-- Flights Section
-                <div id="flights-section" style="display: none;">
-                    <h3>Flights</h3>
-                    <table id="flights-table" class="styled-table" style="display: none;">
-                        <thead>
-                            <tr>
-                                <th>Flight ID</th>
-                                <th>Booking ID</th>
-                                <th>Ticket Number</th>
-                                <th>Seat Number</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                    <div id="no-flights-message" style="display: none; text-align: center; padding: 1rem;">
-                        No flights found for this booking code.
-                    </div>
-                </div>
-
-                <!-- Hotels Section
-                <div id="hotels-section" style="display: none;">
-                    <h3>Hotels</h3>
-                    <table id="hotels-table" class="styled-table" style="display: none;">
-                        <thead>
-                            <tr>
-                                <th>Booking ID</th>
-                                <th>Hotel ID</th>
-                                <th>Room Number</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                    <div id="no-hotels-message" style="display: none; text-align: center; padding: 1rem;">
-                        No hotels found for this booking code.
-                    </div>
-                </div>
-
-                <!-- Cars Section 
-                <div id="cars-section" style="display: none;">
-                    <h3>Cars</h3>
-                    <table id="cars-table" class="styled-table" style="display: none;">
-                        <thead>
-                            <tr>
-                                <th>Booking ID</th>
-                                <th>License Plate</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                    <div id="no-cars-message" style="display: none; text-align: center; padding: 1rem;">
-                        No cars found for this booking code.
-                    </div>
-                </div>
-                <button id="close-tables-button" style="display: none;" onclick="closeTables()">Close</button> -->
-
-            </div>
-
-            <!-- <div> 
-                <section id="booking" class="section">
-                    <h2>Create a Booking</h2>
-                    <form id="booking-form">
-                        <h3>Flight</h3>
-                        <label for="origin">Origin:</label>
-                        <input type="text" id="origin" name="origin" required>
-
-                        <label for="destination">Destination:</label>
-                        <input type="text" id="destination" name="destination" required>
-
-                        <label for="flight-date">Flight Date:</label>
-                        <input type="date" id="flight-date" name="flight-date" required>
-
-                        <label for="seat-class">Seat Class:</label>
-                        <select id="seat-class" name="seat-class">
-                            <option value="economy">Economy</option>
-                            <option value="business">Business</option>
-                            <option value="first">First</option>
-                        </select>
-
-                        <label for="seat-number">Seat Number:</label>
-                        <input type="text" id="seat-number" name="seat-number">
-
-                        <h3>Hotel</h3>
-                        <label for="hotel">Hotel:</label>
-                        <input type="text" id="hotel" name="hotel">
-
-                        <label for="room-type">Room Type:</label>
-                        <select id="room-type" name="room-type">
-                            <option value="single">Single</option>
-                            <option value="double">Double</option>
-                            <option value="suite">Suite</option>
-                        </select>
-
-                        <h3>Car</h3>
-                        <label for="car-model">Car Model:</label>
-                        <input type="text" id="car-model" name="car-model">
-
-                        <label for="seats">Number of Seats:</label>
-                        <input type="number" id="seats" name="seats">
-
-                        <button type="submit">Book</button>
-                    </form>
-                </section>
-            </div>        -->   
         </main>
     </div>
     

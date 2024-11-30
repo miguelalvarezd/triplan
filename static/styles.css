@@ -124,7 +124,7 @@ main.section .nav-button {
     /* Rounded corners */
     cursor: pointer;
     text-align: center;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: background-color 0.3s ease, transform 0.3s ease;
     flex: 1;
     /* Ensure buttons share equal width */
     max-width: 500px;
@@ -154,7 +154,7 @@ select {
     margin-bottom: 1rem;
     margin-top: 0.5rem;
     font-size: 1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 #manage-bookings-form input[type="text"] {
@@ -175,6 +175,17 @@ select {
     border: 1px solid var(--primary-light);
 }
 
+#book-flight-form input[type="date"] {
+    background-color: var(--white);
+    /* Light blue color or your desired color */
+    border: 1px solid var(--primary-light);
+}
+
+#book-flight-form select {
+    background-color: var(--white);
+    /* Light blue color or your desired color */
+    border: 1px solid var(--primary-light);
+}
 
 input:focus,
 select:focus {
@@ -193,7 +204,7 @@ button {
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.3s ease;
 }
 
 button:hover {
@@ -504,7 +515,7 @@ footer {
     border-radius: var(--radius);
     cursor: pointer;
     font-size: 0.9rem;
-    transition: background-color 0.2s;
+    transition: background-color 0.3s ease;
     margin-left: auto;
 }
 
@@ -520,7 +531,7 @@ footer {
     border-radius: var(--radius);
     cursor: pointer;
     font-size: 0.9rem;
-    transition: background-color 0.2s;
+    transition: background-color 0.3s ease;
     margin-left: auto;
 }
 
@@ -587,7 +598,7 @@ footer {
     border-radius: var(--radius);
     cursor: pointer;
     font-size: 0.9rem;
-    transition: background-color 0.2s;
+    transition: background-color 0.3s ease;
     margin-left: auto;
 }
 
@@ -630,7 +641,7 @@ footer {
     border: none;
     border-radius: var(--radius);
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.3s ease;
     margin-left: auto;
 }
 
@@ -660,12 +671,11 @@ footer {
     background-color: var(--error-red);
     color: var(--white);
     padding: 0.5rem 1rem;
-    border: none; 
+    border: none;
     border-radius: var(--radius);
     cursor: pointer;
     font-size: 0.9rem;
-    transition: background-color 0.2s;
-    margin-left: auto;
+    transition: background-color 0.3s ease;
 }
 
 #cancel-booking:hover {
@@ -703,4 +713,128 @@ footer {
 
 #cancelBookingModal h3 {
     margin-bottom: 1.5rem;
+}
+
+#bookingDetailsModal .modal-content {
+    position: relative;
+    background-color: var(--background-light);
+    margin: 10% auto;
+    padding: 2rem;
+    width: 80%;
+    max-width: 800px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+#bookingDetailsModal .close {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--secondary);
+}
+
+#bookingDetailsModal .close:hover {
+    color: var(--primary-dark);
+}
+
+#bookingDetailsModal h2 {
+    margin-bottom: 1.5rem;
+    color: var(--primary-dark);
+}
+
+.booking-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+}
+
+#booking-details {
+    /* background-color: var(--error-red); */
+    color: var(--white);
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+#bookFlightModal .modal-content {
+    position: relative;
+    background-color: var(--background-light);
+    margin: 10% auto;
+    padding: 2rem;
+    width: 80%;
+    max-width: 800px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+#bookFlightModal .close {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--secondary);
+}
+
+#bookFlightModal .close:hover {
+    color: var(--primary-dark);
+}
+
+#bookFlightModal h2 {
+    margin-bottom: 1.5rem;
+    color: var(--primary-dark);
+}
+
+#book-button {
+    /* background-color: var(--error-red); */
+    color: var(--white);
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+#booking-summary-content {
+    background-color: var(--white);
+    padding: 1rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-top: 1rem;
+}
+
+.summary-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+}
+
+.summary-buttons button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: var(--radius);
+    background-color: var(--primary-dark);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.summary-buttons button:hover {
+    background-color: var(--background-dark);
+}
+
+#close-booking-summary {
+    background-color: var(--secondary);
+}
+
+#close-booking-summary:hover {
+    background-color: var(--background-dark);
 }
