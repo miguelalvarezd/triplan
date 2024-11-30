@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request, send_from_directory
 from flask_mysqldb import MySQL
 from flask_cors import CORS
+from library.airports_check import find_airports_in_radius
 
 app = Flask(__name__, static_folder='static')
 
@@ -140,7 +141,7 @@ def get_booking(booking_code):
 def get_bookings_client(dni):
     try:
         cursor = conexion.connection.cursor()
-        sql = "SELECT * FROM RESERVAS WHERE DNI = %s"
+        sql = "SELECT * FROM RESERVAS WHERE DNI = %s ORDER BY FECHA_INICIO DESC"
         cursor.execute(sql, (dni,))
         bookings = cursor.fetchall()
 
@@ -161,6 +162,178 @@ def get_bookings_client(dni):
             return jsonify({'message': 'No bookings found for this client', 'success': False})
     except Exception as ex:
         return jsonify({'message': 'Error fetching bookings', 'success': False, 'error': str(ex)})
+
+
+# API route for fetching flights
+@app.route('/api/flights/booking/<booking_code>', methods=['GET'])
+def fetch_flights(booking_code):
+    try:
+        cursor = conexion.connection.cursor()
+        sql = "SELECT * FROM RESERVAS_AVION WHERE ID_RESERVA = %s"
+        cursor.execute(sql, (booking_code,))
+        flights = cursor.fetchall()
+
+        if flights:
+            return jsonify({
+                'flights': [
+                    {
+                        'id_vuelo': flight[0],
+                        'id_reserva': flight[1],
+                        'numero_billete': flight[2],
+                        'numero_asiento': flight[3]
+                    } for flight in flights
+                ],
+                'message': 'Flights found',
+                'success': True
+            })
+        else:
+            return jsonify({'message': 'No flights found for this booking', 'success': False})
+    except Exception as ex:
+        return jsonify({'message': 'Error fetching flights', 'success': False, 'error': str(ex)})
+
+# API route for fetching hotels
+@app.route('/api/hotels/booking/<booking_code>', methods=['GET'])
+def fetch_hotels(booking_code):
+    try:
+        cursor = conexion.connection.cursor()
+        sql = "SELECT * FROM RESERVAS_HOTEL WHERE ID_RESERVA = %s"
+        cursor.execute(sql, (booking_code,))
+        hotels = cursor.fetchall()
+
+        if hotels:
+            return jsonify({
+                'hotels': [
+                    {
+                        'id_reserva': hotel[0],
+                        'id_hotel': hotel[1],
+                        'numero_habitacion': hotel[2]
+                    } for hotel in hotels
+                ],
+                'message': 'Hotels found',
+                'success': True
+            })
+        else:
+            return jsonify({'message': 'No hotels found for this booking', 'success': False})
+    except Exception as ex:
+        return jsonify({'message': 'Error fetching hotels', 'success': False, 'error': str(ex)})
+
+# API route for fetching cars
+@app.route('/api/cars/booking/<booking_code>', methods=['GET'])
+def fetch_cars(booking_code):
+    try:
+        cursor = conexion.connection.cursor()
+        sql = "SELECT * FROM RESERVAS_COCHE WHERE ID_RESERVA = %s"
+        cursor.execute(sql, (booking_code,))
+        cars = cursor.fetchall()
+
+        if cars:
+            return jsonify({
+                'cars': [
+                    {
+                        'id_reserva': car[0],
+                        'matricula_coche': car[1]
+                    } for car in cars
+                ],
+                'message': 'Cars found',
+                'success': True
+            })
+        else:
+            return jsonify({'message': 'No cars found for this booking', 'success': False})
+    except Exception as ex:
+        return jsonify({'message': 'Error fetching cars', 'success': False, 'error': str(ex)})
+    
+# API route for finding cities
+@app.route('/api/airports/<city_name>', methods=['GET'])
+def fetch_airports(city_name):
+    try:
+        result, error = find_airports_in_radius(city_name, 500)
+
+        if error:
+            return jsonify({'message': error, 'success': False})
+        else:
+            airports = []
+            for airport in result:
+                airports.append(airport['code'])
+
+            cursor = conexion.connection.cursor()
+
+            # Dynamically create placeholders
+            placeholders = ', '.join(['%s'] * len(airports))
+
+            # Create the SQL query with placeholders
+            sql = f"""SELECT T.ID_TRAYECTO, T.DESTINO
+                    FROM TRAYECTOS T
+                    WHERE T.DESTINO IN ({placeholders})
+                    ORDER BY 2;
+                """
+
+            # Execute the query with the airports as parameters
+            cursor.execute(sql, tuple(airports))
+            flights = cursor.fetchall()
+
+            if flights:
+                return jsonify({
+                    'flights': [
+                        {
+                            'id_trayecto': flight[0],
+                            'destino': flight[1]
+                        } for flight in flights
+                    ],
+                    'message': 'Flights found',
+                    'success': True
+                })
+            else:
+                return jsonify({'message': f'No flights found for {city_name}', 'success': False})
+
+    except Exception as ex:
+        return jsonify({'message': 'Error fetching flights', 'success': False, 'error': str(ex)})
+    
+# API route for finding tiers
+@app.route('/api/tiers', methods=['GET'])
+def fetch_tiers():
+    try:
+        cursor = conexion.connection.cursor()
+
+        # Create the SQL query with placeholders
+        sql = "SELECT TIER, DESCUENTO FROM TIERS ORDER BY DESCUENTO;"
+
+        # Execute the query with the airports as parameters
+        cursor.execute(sql)
+        tiers = cursor.fetchall()
+
+        if tiers:
+            return jsonify({
+                'tiers': [
+                    {
+                        'tier': tier[0],
+                        'descuento': tier[1] * 100
+                    } for tier in tiers
+                ],
+                'message': 'Tiers found',
+                'success': True
+            })
+        else:
+            return jsonify({'message': 'No tiers found.', 'success': False})
+
+    except Exception as ex:
+        return jsonify({'message': 'Error fetching tiers', 'success': False, 'error': str(ex)})
+    
+# API route for editing tiers
+@app.route('/api/tiers', methods=['PUT'])
+def update_tier_discount():
+    try:
+        data = request.json
+        tier = data['tier']
+        discount = f"{int(data['discount']) / 100}"
+
+        cursor = conexion.connection.cursor()
+        sql = "UPDATE TIERS SET DESCUENTO = %s WHERE TIER = %s"
+        cursor.execute(sql, (discount, tier))
+        conexion.connection.commit()
+
+        return jsonify({'message': 'Tier discount updated successfully.', 'success': True})
+    except Exception as ex:
+        return jsonify({'message': 'Error updating tier discount.', 'success': False, 'error': str(ex)})
 
 if __name__ == '__main__':
     app.run(debug=True)

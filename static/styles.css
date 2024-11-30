@@ -23,6 +23,7 @@
     --accent-blue: #5F99B3;
     /* Blue Accent */
     --error-red: #D9544F;
+    --error-red-dark: #8c3532;
     /* Soft Red */
 
     /* BLUE */
@@ -151,11 +152,24 @@ select {
     border: 1px solid var(--background-light);
     border-radius: var(--radius);
     margin-bottom: 1rem;
+    margin-top: 0.5rem;
     font-size: 1rem;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 #manage-bookings-form input[type="text"] {
+    background-color: var(--white);
+    /* Light blue color or your desired color */
+    border: 1px solid var(--primary-light);
+}
+
+#search-flights-form input[type="text"] {
+    background-color: var(--white);
+    /* Light blue color or your desired color */
+    border: 1px solid var(--primary-light);
+}
+
+#edit-discount-form input[type="number"] {
     background-color: var(--white);
     /* Light blue color or your desired color */
     border: 1px solid var(--primary-light);
@@ -207,6 +221,14 @@ input[type="checkbox"] {
 }
 
 #booking-summary-2 {
+    background-color: var(--background-light);
+}
+
+#search-flights {
+    background-color: var(--background-light);
+}
+
+#tier-summary {
     background-color: var(--background-light);
 }
 
@@ -278,6 +300,7 @@ footer {
     /* box-shadow: var(--shadow); */
     background-color: var(--white);
     border-radius: var(--radius);
+    table-layout: fixed;
 }
 
 .styled-table thead tr {
@@ -520,13 +543,25 @@ footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+    z-index: 1000;
+}
+
+.portal-user.hidden {
+    transform: translateY(-100%);
 }
 
 .portal-container {
     /* display: flex;
     min-height: calc(100vh - 100px); */
     padding: 3rem;
-    padding-top: 0rem;
+    padding-top: 1rem;
+    margin-top: 4rem;
 }
 
 .welcome-message {
@@ -542,4 +577,81 @@ footer {
     margin-bottom: 1rem;
     margin-top: 1rem;
     color: var(--white);
+}
+
+#close-tables-button {
+    background-color: var(--error-red);
+    color: var(--white);
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+    margin-left: auto;
+}
+
+#close-tables-button:hover {
+    background-color: var(--error-red-dark);
+}
+
+#editDiscountModal .modal-content {
+    background-color: var(--background-light);
+    margin: 10% auto;
+    padding: 2rem;
+    width: 80%;
+    max-width: 800px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    position: relative;
+}
+
+#editDiscountModal .close {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--secondary);
+}
+
+#editDiscountModal .close:hover {
+    color: var(--primary-dark);
+}
+
+#editDiscountModal h2 {
+    color: var(--primary-dark);
+    margin-bottom: 1.5rem;
+}
+
+#cancel-tier {
+    background-color: var(--error-red);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-left: auto;
+}
+
+#cancel-tier:hover {
+    background-color: var(--error-red-dark);
+}
+
+#edit-tiers-buttons {
+    margin-top: 1rem;
+    /* padding: 0.5rem 2rem; */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+
+}
+
+#edit-tier {
+    background-color: var(--primary-dark);
+}
+
+#edit-tier:hover {
+    background-color: var(--secondary);
 }

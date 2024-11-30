@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Agency Interface</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="scripts.js" defer></script>
+    <link rel="icon" href="assets/favicon.png" type="image/x-icon">
+</head>
+<body>
+    <!-- <header>
+        <h1>Triplan Booking System</h1>
+    </header> -->
+
+    <!-- <div class="portal-logo">
+        Triplan Booking System
+    </div> -->
+
+    <div class="portal-user">
+        <h2 class="triplan">Triplan Booking System </h2>
+        <div>
+            <!-- <button class="client-info-btn" onclick="openAgentInfoModal()">Show Your Agent Info</button> -->
+            <button class="logout-btn" onclick="logout()">Exit Agent Portal</button>
+        </div>
+    </div>
+
+    <div class="portal-container">
+        <main>
+            <!-- Client Info Modal -->
+            <div id="clientInfoModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeClientInfoModal()">&times;</span>
+                    <h2>Client Information</h2>
+                    <table id="modal-client-table" class="styled-table">
+                        <thead>
+                            <tr>
+                                <th>DNI</th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Tier</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <h1 class="welcome-message" id="welcome-message">Welcome, Agent!</h1>
+
+            <!-- <div id="booking-summary" class="section">
+                <h2>Booking Summary</h2>
+                <table id="summary-table" class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>DNI</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                         Bookings will be populated here dynamically 
+                    </tbody>
+                </table>
+                <div id="no-bookings-message" style="display: none; text-align: center; padding: 1rem;">
+                    You haven't made any booking yet.
+                </div>
+            </div>
+
+            <div>
+                <section id="booking" class="section">
+                    <h2>Create a Booking</h2>
+                    <form id="booking-form">
+                        <h3>Flight</h3>
+                        <label for="origin">Origin:</label>
+                        <input type="text" id="origin" name="origin" required>
+
+                        <label for="destination">Destination:</label>
+                        <input type="text" id="destination" name="destination" required>
+
+                        <label for="flight-date">Flight Date:</label>
+                        <input type="date" id="flight-date" name="flight-date" required>
+
+                        <label for="seat-class">Seat Class:</label>
+                        <select id="seat-class" name="seat-class">
+                            <option value="economy">Economy</option>
+                            <option value="business">Business</option>
+                            <option value="first">First</option>
+                        </select>
+
+                        <label for="seat-number">Seat Number:</label>
+                        <input type="text" id="seat-number" name="seat-number">
+
+                        <h3>Hotel</h3>
+                        <label for="hotel">Hotel:</label>
+                        <input type="text" id="hotel" name="hotel">
+
+                        <label for="room-type">Room Type:</label>
+                        <select id="room-type" name="room-type">
+                            <option value="single">Single</option>
+                            <option value="double">Double</option>
+                            <option value="suite">Suite</option>
+                        </select>
+
+                        <h3>Car</h3>
+                        <label for="car-model">Car Model:</label>
+                        <input type="text" id="car-model" name="car-model">
+
+                        <label for="seats">Number of Seats:</label>
+                        <input type="number" id="seats" name="seats">
+
+                        <button type="submit">Book</button>
+                    </form>
+                </section>
+            </div> -->
+            <!-- <section id="manage-bookings">
+                
+            </section> -->
+
+            <div id="booking-summary-2" class="section">
+                <!-- <h2>Booking Summary</h2> -->
+                <h2>Search for Bookings</h2>
+                <form id="manage-bookings-form" onsubmit="manageBookings(event)">
+                    <label for="booking-code">Booking Code:</label>
+                    <input type="text" id="booking-code" name="booking-code" required>
+
+                    <button type="submit">Find Booking</button>
+                </form>
+                <table id="summary-table-2" class="styled-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>DNI</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Bookings will be populated here dynamically -->
+                    </tbody>
+                </table>
+                <div id="no-bookings-message-2" style="display: none; text-align: center; padding: 1rem;">
+                    No bookings found with this booking code.
+                </div>
+
+                <!-- <h2>Related Booking Details</h2> -->
+
+                <!-- Flights Section -->
+                <div id="flights-section" style="display: none;">
+                    <h3>Flights</h3>
+                    <table id="flights-table" class="styled-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Flight ID</th>
+                                <th>Booking ID</th>
+                                <th>Ticket Number</th>
+                                <th>Seat Number</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div id="no-flights-message" style="display: none; text-align: center; padding: 1rem;">
+                        No flights found for this booking code.
+                    </div>
+                </div>
+
+                <!-- Hotels Section -->
+                <div id="hotels-section" style="display: none;">
+                    <h3>Hotels</h3>
+                    <table id="hotels-table" class="styled-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Hotel ID</th>
+                                <th>Room Number</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div id="no-hotels-message" style="display: none; text-align: center; padding: 1rem;">
+                        No hotels found for this booking code.
+                    </div>
+                </div>
+
+                <!-- Cars Section -->
+                <div id="cars-section" style="display: none;">
+                    <h3>Cars</h3>
+                    <table id="cars-table" class="styled-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>License Plate</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div id="no-cars-message" style="display: none; text-align: center; padding: 1rem;">
+                        No cars found for this booking code.
+                    </div>
+                </div>
+                <button id="close-tables-button" style="display: none;" onclick="closeTables()">Close</button>
+
+            </div>
+
+            <div id="tier-summary" class="section">
+                <h2>Manage Tiers</h2>
+                <table id="tiers-table" class="styled-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Tier</th>
+                            <th>Discount</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Bookings will be populated here dynamically -->
+                    </tbody>
+                </table>
+                <button id="close-tables-button" style="display: none;" onclick="closeTables()">Close</button>
+            </div>
+
+            <!-- Modal for editing discount -->
+            <div id="editDiscountModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeEditDiscountModal()">&times;</span>
+                    <h2>Edit Discount for Tier: <span id="modal-tier-name"></span></h2>
+                    <form id="edit-discount-form">
+                        <label for="new-discount">New Discount (%):</label>
+                        <input type="number" id="new-discount" name="new-discount" required min="0" max="100">
+                        <div id='edit-tiers-buttons'>
+                            <button type="submit">Save</button>
+                            <button id='cancel-tier' type="button" onclick="closeEditDiscountModal()">Cancel</button>
+                        </div>
+                    </form>
+                    <div id="edit-tiers-success" class='success-message' style="display: none; text-align: center; padding: 1rem;">
+                        Discount updated successfully!
+                    </div>
+                    <div id="edit-tiers-fail" class='failed-message' style="display: none; text-align: center; padding: 1rem;">
+                        An error occurred while updating the discount. Please, try again
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <footer>
+        <p>&copy; 2024 Triplan Travel Agency. All rights reserved.</p>
+    </footer>
+</body>
+</html>
