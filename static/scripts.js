@@ -50,65 +50,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.closeClientInfoModal = () => {
             clientInfoModal.style.display = 'none';
         };
-
-        async function populateBookingSummary() {
-            const dni = localStorage.getItem('customerDNI');
-            const summaryTable = document.getElementById('summary-table');
-            const noBookingsMessage = document.getElementById('no-bookings-message');
-            
-            if (!dni) {
-                console.error("No DNI found in localStorage");
-                return;
-            }
-        
-            if (!summaryTable) {
-                console.error("Summary table element not found");
-                return;
-            }
-        
-            try {
-                // Updated endpoint URL
-                const response = await fetch(`http://localhost:5000/api/bookings/client/${dni}`);
-                const data = await response.json();
-                console.log('Booking data received:', data);
-        
-                const tableBody = summaryTable.querySelector('tbody');
-                if (!tableBody) {
-                    console.error("Table body not found");
-                    return;
-                }
-        
-                // Clear existing rows
-                tableBody.innerHTML = '';
-        
-                if (data.success && data.bookings && data.bookings.length > 0) {
-                    data.bookings.forEach(booking => {
-                        const row = document.createElement('tr');
-                        // Format dates if they exist
-                        const startDate = booking.start_date ? new Date(booking.start_date).toLocaleDateString() : 'N/A';
-                        const endDate = booking.end_date ? new Date(booking.end_date).toLocaleDateString() : 'N/A';
-                        
-                        row.innerHTML = `
-                            <td>${booking.id}</td>
-                            <td>${booking.dni}</td>
-                            <td>${startDate}</td>
-                            <td>${endDate}</td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
-                    summaryTable.style.display = 'table';
-                    noBookingsMessage.style.display = 'none';
-                } else {
-                    summaryTable.style.display = 'none';
-                    noBookingsMessage.style.display = 'block';
-                }
-            } catch (error) {
-                console.error("Error fetching bookings:", error);
-                summaryTable.style.display = 'none';
-                noBookingsMessage.style.display = 'block';
-                noBookingsMessage.textContent = 'Error loading bookings. Please try again later.';
-            }
-        }
         
         // Ensure this is called when the page loads
         if (document.getElementById('booking-summary')) {
@@ -241,16 +182,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 setTimeout(() => {
                     window.closeEditDiscountModal();
- 
                 }, 1000);
             } else {
                 // alert(data.message || 'Failed to update discount.');
                 document.getElementById('edit-tiers-fail').style.display = 'block';
-                
-                // setTimeout(() => {
-                //     window.closeEditDiscountModal();
- 
-                // }, 1000);
             }
         } catch (error) {
             console.error('Error updating discount:', error);
@@ -263,6 +198,122 @@ document.addEventListener('DOMContentLoaded', async () => {
         populateTiersTable();
     }
 });
+
+async function populateBookingSummary() {
+    const dni = localStorage.getItem('customerDNI');
+    const summaryTable = document.getElementById('summary-table');
+    const noBookingsMessage = document.getElementById('no-bookings-message');
+    
+    if (!dni) {
+        console.error("No DNI found in localStorage");
+        return;
+    }
+
+    if (!summaryTable) {
+        console.error("Summary table element not found");
+        return;
+    }
+
+    try {
+        // Updated endpoint URL
+        const response = await fetch(`http://localhost:5000/api/bookings/client/${dni}`);
+        const data = await response.json();
+        console.log('Booking data received:', data);
+
+        const tableBody = summaryTable.querySelector('tbody');
+        if (!tableBody) {
+            console.error("Table body not found");
+            return;
+        }
+
+        // Clear existing rows
+        tableBody.innerHTML = '';
+
+        if (data.success && data.bookings && data.bookings.length > 0) {
+            data.bookings.forEach(booking => {
+                const row = document.createElement('tr');
+                // Format dates if they exist
+                const startDate = booking.start_date ? new Date(booking.start_date).toLocaleDateString() : 'N/A';
+                const endDate = booking.end_date ? new Date(booking.end_date).toLocaleDateString() : 'N/A';
+                
+                row.innerHTML = `
+                    <td>${booking.id}</td>
+                    <td>${booking.dni}</td>
+                    <td>${startDate}</td>
+                    <td>${endDate}</td>
+                    <td>
+                        <button id='cancel-booking' onclick="openCancelBookingModal('${booking.id}')">Cancel Booking</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+            summaryTable.style.display = 'table';
+            noBookingsMessage.style.display = 'none';
+        } else {
+            summaryTable.style.display = 'none';
+            noBookingsMessage.style.display = 'block';
+        }
+    } catch (error) {
+        console.error("Error fetching bookings:", error);
+        summaryTable.style.display = 'none';
+        noBookingsMessage.style.display = 'block';
+        noBookingsMessage.textContent = 'Error loading bookings. Please try again later.';
+    }
+}
+
+const cancelBookingModal = document.getElementById('cancelBookingModal');
+const modalBookingID = document.getElementById('modal-booking-id');
+
+async function cancelBooking() {
+    try {
+        if (!currentBookingID) {
+            alert('No booking ID provided.');
+            return;
+        }
+
+        const response = await fetch(`http://localhost:5000/api/bookings/cancel/${currentBookingID}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            document.getElementById('cancel-booking-fail').style.display = 'none'; // Hide any previous errors
+            document.getElementById('cancel-booking-success').textContent = data.message || 'Booking cancelled successfully!';
+            document.getElementById('cancel-booking-success').style.display = 'block';
+            populateBookingSummary(); // Refresh the booking table
+
+            setTimeout(() => {
+                window.closeCancelBookingModal();
+            }, 1000);
+        } else {
+            // Display the error message from the API
+            document.getElementById('cancel-booking-fail').textContent = data.message || 'Failed to cancel booking.';
+            document.getElementById('cancel-booking-fail').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error canceling booking:', error);
+        document.getElementById('cancel-booking-fail').textContent = 'An error occurred while cancelling the booking. Please try again later.';
+        document.getElementById('cancel-booking-fail').style.display = 'block';
+    }
+}
+
+
+
+window.openCancelBookingModal = (bookingID) => {
+    currentBookingID = bookingID;
+    modalBookingID.textContent = bookingID;
+    cancelBookingModal.style.display = 'block';
+};
+
+
+// Close the modal
+window.closeCancelBookingModal = () => {
+    cancelBookingModal.style.display = 'none';
+    document.getElementById('cancel-booking-success').style.display = 'none';
+    document.getElementById('cancel-booking-fail').style.display = 'none';
+};
 
 document.getElementById('new-customer-form').addEventListener('submit', async (e) => {
     e.preventDefault();

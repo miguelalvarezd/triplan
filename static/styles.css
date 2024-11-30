@@ -655,3 +655,52 @@ footer {
 #edit-tier:hover {
     background-color: var(--secondary);
 }
+
+#cancel-booking {
+    background-color: var(--error-red);
+    color: var(--white);
+    padding: 0.5rem 1rem;
+    border: none; 
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+    margin-left: auto;
+}
+
+#cancel-booking:hover {
+    background-color: var(--error-red-dark);
+}
+
+#cancelBookingModal .modal-content {
+    background-color: var(--background-light);
+    margin: 10% auto;
+    padding: 2rem;
+    width: 80%;
+    max-width: 800px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    position: relative;
+}
+
+#cancelBookingModal .close {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--secondary);
+}
+
+#cancelBookingModal .close:hover {
+    color: var(--primary-dark);
+}
+
+#cancelBookingModal h2 {
+    color: var(--primary-dark);
+    margin-bottom: 1.5rem;
+}
+
+#cancelBookingModal h3 {
+    margin-bottom: 1.5rem;
+}

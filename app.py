@@ -334,6 +334,38 @@ def update_tier_discount():
         return jsonify({'message': 'Tier discount updated successfully.', 'success': True})
     except Exception as ex:
         return jsonify({'message': 'Error updating tier discount.', 'success': False, 'error': str(ex)})
+    
+# API route for canceling bookings
+@app.route('/api/bookings/cancel/<booking_id>', methods=['DELETE'])
+def cancel_booking(booking_id):
+    try:
+        cursor = conexion.connection.cursor()
+        sql = "SELECT * FROM RESERVAS WHERE ID_RESERVA = %s"
+        cursor.execute(sql, (booking_id,))
+        conexion.connection.commit()
+        if cursor.rowcount == 0:
+            return jsonify({'message': 'No booking found with the provided ID.', 'success': False}), 404
+
+        cursor = conexion.connection.cursor()
+        sql = "SELECT * FROM RESERVAS WHERE ID_RESERVA = %s AND FECHA_INICIO > DATE_ADD(NOW(), INTERVAL 24 HOUR)"
+        cursor.execute(sql, (booking_id,))
+        conexion.connection.commit()
+        if cursor.rowcount == 0:
+            return jsonify({'message': 'Bookings can only be cancelled up to 24 hours before the start date.', 'success': False}), 404
+
+
+        cursor = conexion.connection.cursor()
+        sql = "DELETE FROM RESERVAS WHERE ID_RESERVA = %s"
+        cursor.execute(sql, (booking_id,))
+        conexion.connection.commit()
+
+        # Check if a booking was deleted
+        if cursor.rowcount == 0:
+            return jsonify({'message': 'No booking found with the provided ID.', 'success': False}), 404
+
+        return jsonify({'message': 'Booking cancelled successfully!', 'success': True}), 200
+    except Exception as ex:
+        return jsonify({'message': 'Error cancelling booking.', 'success': False, 'error': str(ex)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
