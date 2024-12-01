@@ -1,8 +1,12 @@
 // CLIENT PORTAL SCRIPTS
 let currentRouteID = null;
 let currentFlightDestination = null; // Global variable to store the destination
+let currentFlightOrigin = null;
 let selectedHotelID = null;
 let selectedCarID = null;
+let selectedReturnRouteID = null;
+let selectedReturnFlightID = null;
+let currentFlightID = null;
 
 const bookFlightModal = document.getElementById('bookFlightModal');
 
@@ -664,7 +668,7 @@ function searchFlights(event) {
                     <td>${flight.hora_salida}</td>
                     <td>${flight.hora_llegada}</td>
                     <td>
-                        <button id='book-button' onclick="openBookFlightModal('${flight.id_trayecto}', '${flight.destino}')">Book</button>
+                        <button id='book-button' onclick="openBookFlightModal('${flight.id_trayecto}', '${flight.destino}', '${flight.origen}')">Book</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -683,12 +687,18 @@ function searchFlights(event) {
     });
 }
 
-function openBookFlightModal(routeID, destination) {
+function openBookFlightModal(routeID, destination, origin) {
     currentRouteID = routeID;
     currentFlightDestination = destination; // Save the destination
+    currentFlightOrigin = origin;
     console.log(`Current Destination: ${currentFlightDestination}`); // Debugging
 
+    toggleCarTable();
+    toggleHotelTable();
+    toggleReturnFlight();
+
     document.getElementById('seat-selection').style.display = 'none';
+    document.getElementById('seat-selection-return').style.display = 'none';
     document.getElementById('continue-button').style.display = 'inline-block';
     document.getElementById('confirm-button').style.display = 'none';
     bookFlightModal.style.display = 'block';
@@ -696,15 +706,38 @@ function openBookFlightModal(routeID, destination) {
 
 
 function closeBookFlightModal() {
+    document.getElementById('booking-summary-content').style.display = 'none';
     currentRouteID = null;
     bookFlightModal.style.display = 'none';
     document.getElementById('book-flight-form').reset();
     document.getElementById('booking-success').style.display = 'none';
     document.getElementById('booking-fail').style.display = 'none';
+    document.getElementById('book-flight-form').style.display = 'block';
 }
 
 function handleContinue() {
     const departureDate = document.getElementById('departure-date').value;
+    const returnDateInput = document.getElementById('return-date');
+
+
+    if (departureDate) {
+        // Calculate the next day
+        const departureDateObject = new Date(departureDate);
+        const nextDay = new Date(departureDateObject);
+        nextDay.setDate(departureDateObject.getDate() + 1); // Add 1 day
+
+        // Format the next day as YYYY-MM-DD
+        const nextDayString = nextDay.toISOString().split('T')[0];
+
+        // Set the min attribute of the return date to the next day
+        returnDateInput.min = nextDayString;
+
+        if (returnDateInput.value && returnDateInput.value < nextDayString) {
+            returnDateInput.value = ''; // Reset the return date
+            alert('The return date is no longer valid and has been cleared.');
+            toggleReturnFlight();
+        }
+    }
 
     // Validate the date field
     if (!departureDate) {
@@ -718,16 +751,31 @@ function handleContinue() {
     document.getElementById('confirm-button').style.display = 'inline-block';
 
     // Populate seat selection (example: fetch available seats from API)
-    populateSeats(departureDate);
+    populateSeats(departureDate, 0);
 }
 
-async function populateSeats(departureDate) {
+async function populateSeats(departureDate, returnMode) {
+    if(returnMode == 0){
+        routeID = currentRouteID;
+    }else if(returnMode == 1){
+        routeID = selectedReturnRouteID;
+    }
     try {
-        const response = await fetch(`http://localhost:5000/api/flights/check/${currentRouteID}/${departureDate}`);
+        const response = await fetch(`http://localhost:5000/api/flights/check/${routeID}/${departureDate}`);
         const data = await response.json();
 
         if (data.success && data.available_seats) {
-            const seatSelect = document.getElementById('seat-number');
+            let seatSelect;
+
+            if (returnMode == 0) {
+                seatSelect = document.getElementById('seat-number');
+            } else {
+                seatSelect = document.getElementById('seat-number-return');
+            }
+            // Now you can use seatSelect here
+            
+
+            // const seatSelect = document.getElementById('seat-number');
             seatSelect.innerHTML = ''; // Clear previous options
             data.available_seats.forEach(seat => {
                 const option = document.createElement('option');
@@ -735,6 +783,14 @@ async function populateSeats(departureDate) {
                 option.textContent = `Seat ${seat}`;
                 seatSelect.appendChild(option);
             });
+            if(returnMode == 0){
+                currentFlightID = data.id_vuelo;
+                console.log(currentFlightID);
+            }else if(returnMode == 1){
+                selectedReturnFlightID = data.id_vuelo;
+                console.log(selectedReturnFlightID);
+            }
+            
         } else {
             alert(data.message || 'No seats available.');
         }
@@ -743,45 +799,183 @@ async function populateSeats(departureDate) {
     }
 }
 
+async function fetchAvailableReturnFlights(){
+    const returnDate = document.getElementById('return-date').value;
+
+    try {
+        const destination = currentFlightOrigin;
+        const origin = currentFlightDestination;
+        const response = await fetch(`http://localhost:5000/api/flights/between/${origin}/${destination}`);
+        const data = await response.json();
+
+        if (data.success) {
+            const tableBody = document.getElementById('return-flight-table').querySelector('tbody');
+            tableBody.innerHTML = ''; // Clear previous data
+            data.flights.forEach(flight => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${flight.id_trayecto}</td>
+                    <td>${flight.origen}</td>
+                    <td>${flight.destino}</td>
+                    <td>${flight.hora_salida}</td>
+                    <td>${flight.hora_llegada}</td>
+                    <td><button onclick="selectReturnFlight('${flight.id_trayecto}', '${flight.origen}', '${flight.destino}', '${flight.hora_salida}', '${flight.hora_llegada}')">Select</button></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching flights:', error);
+    }
+}
+
+function handleReturnDate() {
+    const container = document.getElementById('return-table-container');
+    container.style.display = 'block';
+    fetchAvailableReturnFlights();
+}
+
+function toggleReturnFlight() {
+    const addReturnFlight = document.getElementById('add-return-flight').checked;
+    const container = document.getElementById('return-table-container');
+    const dateSelection = document.getElementById('return-date-selection');
+    const returnFlightHeader = document.getElementById('return-table-header');
+    
+    if (addReturnFlight) {
+        dateSelection.style.display = 'block';
+        container.style.display = 'none'; // Hide until date is selected
+    } else {
+        returnFlightHeader.textContent = 'Available Return Flights';
+        dateSelection.style.display = 'none';
+        container.style.display = 'none';
+        document.getElementById('return-date').value = '';
+        document.getElementById('seat-selection-return').style.display = 'none';
+        selectedReturnRouteID = null;
+    }
+}
+
+function selectReturnFlight(routeID, origin, destination, departure, arrival) {
+    const returnFlightTable = document.getElementById('return-flight-table');
+    const returnFlightHeader = document.getElementById('return-table-header');
+    const departureDate = document.getElementById('return-date').value;
+
+    // Update header only if not already selected
+    if (returnFlightHeader.textContent !== 'Selected Return Flight') {
+        returnFlightHeader.textContent = 'Selected Return Flight';
+    }
+
+    // Clear table and display selected hotel
+    returnFlightTable.querySelector('tbody').innerHTML = `
+        <tr>
+            <td>${routeID}</td>
+            <td>${origin}</td>
+            <td>${destination}</td>
+            <td>${departure}</td>
+            <td>${arrival}</td>
+            <td><button style="background-color: var(--error-red);" onclick="cancelReturnFlight(event)">Cancel</button></td>
+        </tr>
+    `;
+    selectedReturnRouteID = routeID;
+    populateSeats(departureDate, 1);
+    document.getElementById('seat-selection-return').style.display = 'block';
+}
+
+function cancelReturnFlight(event) {
+    if (event) {
+        event.preventDefault(); // Prevent the default form submission behavior
+    }
+
+    const returnFlightTable = document.getElementById('return-flight-table');
+    const returnFlightHeader = document.getElementById('return-table-header');
+
+    // Reset header
+    returnFlightHeader.textContent = 'Available Return Flights';
+    document.getElementById('seat-selection-return').style.display = 'none';
+
+    handleReturnDate(); // Reload available flights
+
+    selectedReturnRouteID = null;
+}
+
+
 async function submitBooking() {
     const departureDate = document.getElementById('departure-date').value;
     const seatNumber = document.getElementById('seat-number').value;
+    let returnDate = null;
+    let seatNumberReturn = null;
+    let id_reserva = null;
 
+    // Handle return flight details
+    if (selectedReturnRouteID == null) {
+        returnDate = departureDate;
+    } else {
+        returnDate = document.getElementById('return-date').value;
+        seatNumberReturn = document.getElementById('seat-number-return').value;
+        if (!seatNumberReturn) {
+            alert('Please select a seat for the return flight.');
+            return;
+        }
+    }
+
+    // Validate departure seat
     if (!seatNumber) {
         alert('Please select a seat.');
         return;
     }
 
-    let createdFlightID = null;
+    // Handle flight creation for departure
+    if (currentFlightID == null) {
+        try {
+            const response = await fetch('http://localhost:5000/api/flights/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    date: departureDate,
+                    id_trayecto: currentRouteID,
+                }),
+            });
 
-    try {
-        const response = await fetch('http://localhost:5000/api/flights/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                date: departureDate,
-                id_trayecto: currentRouteID,
-            }),
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            createdFlightID = data.id_vuelo;
-            document.getElementById('booking-fail').style.display = 'none';
-        } else {
-            document.getElementById('booking-fail').textContent = data.message || 'Flight creation failed.';
-            document.getElementById('booking-fail').style.display = 'block';
+            const data = await response.json();
+            if (data.success) {
+                currentFlightID = data.id_vuelo;
+            } else {
+                alert(data.message || 'Flight creation failed.');
+                return;
+            }
+        } catch (error) {
+            console.error('Error creating flight:', error);
+            alert('An error occurred during flight creation.');
             return;
         }
-
-    } catch (error) {
-        console.error('Error creating flight:', error);
-        document.getElementById('booking-fail').textContent = 'An error occurred during flight creation.';
-        document.getElementById('booking-fail').style.display = 'block';
-        return;
     }
 
+    // Handle flight creation for return
+    if (selectedReturnFlightID == null && selectedReturnRouteID != null) {
+        try {
+            const response = await fetch('http://localhost:5000/api/flights/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    date: returnDate,
+                    id_trayecto: selectedReturnRouteID,
+                }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                selectedReturnFlightID = data.id_vuelo;
+            } else {
+                alert(data.message || 'Return flight creation failed.');
+                return;
+            }
+        } catch (error) {
+            console.error('Error creating return flight:', error);
+            alert('An error occurred during return flight creation.');
+            return;
+        }
+    }
+
+    // Submit booking
     try {
         const response = await fetch('http://localhost:5000/api/booking/create', {
             method: 'POST',
@@ -789,8 +983,8 @@ async function submitBooking() {
             body: JSON.stringify({
                 DNI: localStorage.getItem('customerDNI'),
                 FECHA_INICIO: departureDate,
-                FECHA_FINAL: departureDate,
-                ID_VUELO: createdFlightID,
+                FECHA_FINAL: returnDate,
+                ID_VUELO: currentFlightID,
                 NUMERO_ASIENTO: seatNumber,
                 ID_HOTEL: selectedHotelID,
                 MATRICULA_COCHE: selectedCarID,
@@ -798,39 +992,81 @@ async function submitBooking() {
         });
 
         const data = await response.json();
-
         if (data.success) {
-            // Hide the form and show booking summary
-            document.getElementById('book-flight-form').style.display = 'none';
-            document.getElementById('booking-success').style.display = 'none';
-        
-            // Populate booking summary
-            const summary = `
-                <h3>Flight booked successfully!</h3>
-                <p><strong>Booking ID:</strong> ${data.id_reserva}</p>
-                <p><strong>Flight ID:</strong> ${data.id_vuelo}</p>
-                <p><strong>Ticket Number:</strong> ${data.numero_billete}</p>
-                <p><strong>Departure Date:</strong> ${data.fecha_inicio}</p>
-                <p><strong>Seat Number:</strong> ${data.numero_asiento}</p>
-            `;
-            const summaryDetails = document.getElementById('summary-details');
-            summaryDetails.innerHTML = summary;
-        
-            // Show the summary section
-            const bookingSummary = document.getElementById('booking-summary-content');
-            bookingSummary.style.display = 'block';
+            id_reserva = data.id_reserva;
         } else {
-            document.getElementById('booking-fail').textContent = data.message || 'Booking failed.';
-            document.getElementById('booking-fail').style.display = 'block';
+            alert(data.message || 'Booking failed.');
+            return;
         }
     } catch (error) {
         console.error('Error submitting booking:', error);
-        document.getElementById('booking-fail').textContent = 'An error occurred during booking.';
-        document.getElementById('booking-fail').style.display = 'block';
+        alert('An error occurred during booking.');
+        return;
     }
 
+    // Add return flight to the booking
+    if (selectedReturnRouteID != null) {
+        try {
+            const response = await fetch('http://localhost:5000/api/flight/booking/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    DNI: localStorage.getItem('customerDNI'),
+                    ID_RESERVA: id_reserva,
+                    ID_VUELO: selectedReturnFlightID,
+                    NUMERO_ASIENTO: seatNumberReturn,
+                }),
+            });
+
+            const data = await response.json();
+            if (!data.success) {
+                alert(data.message || 'Return flight booking failed.');
+            }
+        } catch (error) {
+            console.error('Error adding return flight to booking:', error);
+            alert('An error occurred while adding the return flight.');
+        }
+    }
+
+    // Populate the booking summary
     populateBookingSummary();
+    populateBookingReceipt(id_reserva, departureDate, seatNumber, returnDate, seatNumberReturn);
 }
+
+function populateBookingReceipt(id_reserva, departureDate, seatNumber, returnDate, seatNumberReturn) {
+    document.getElementById('book-flight-form').style.display = 'none';
+    document.getElementById('booking-success').style.display = 'none';
+
+    const summaryDetails = document.getElementById('summary-details');
+    let summary = `
+        <h3 style="color: var(--primary);">Booking Successful!</h3>
+        <h3>Receipt</h3>
+        <p><strong>Booking ID:</strong> ${id_reserva}</p>
+        <p><strong>Departure Flight ID:</strong> ${currentFlightID}</p>
+        <p><strong>Departure Date:</strong> ${departureDate}</p>
+        <p><strong>Seat Number:</strong> ${seatNumber}</p>
+    `;
+
+    if (selectedReturnRouteID != null) {
+        summary += `
+            <p><strong>Return Flight ID:</strong> ${selectedReturnFlightID}</p>
+            <p><strong>Return Date:</strong> ${returnDate}</p>
+            <p><strong>Return Seat Number:</strong> ${seatNumberReturn}</p>
+        `;
+    }
+
+    if (selectedHotelID != null) {
+        summary += `<p><strong>Hotel ID:</strong> ${selectedHotelID}</p>`;
+    }
+
+    if (selectedCarID != null) {
+        summary += `<p><strong>Car ID:</strong> ${selectedCarID}</p>`;
+    }
+
+    summaryDetails.innerHTML = summary;
+    document.getElementById('booking-summary-content').style.display = 'block';
+}
+
 
 function closeSummary() {
     const bookingSummary = document.getElementById('booking-summary-content');
@@ -844,7 +1080,7 @@ function printSummary() {
 
     // Open a new window and print the summary
     const printWindow = window.open('', '', 'height=500,width=800');
-    printWindow.document.write('<html><head><title>Booking Summary</title></head><body>');
+    printWindow.document.write('<html><head><title>Booking Receipt</title></head><body>');
     printWindow.document.write('<h2>Booking Summary</h2>');
     printWindow.document.write(summaryDetails);
     printWindow.document.write('</body></html>');
@@ -917,7 +1153,7 @@ function selectHotel(hotelID, hotelName, city, price) {
             <td>${hotelName}</td>
             <td>${city}</td>
             <td>${price}€</td>
-            <td><button style='background-color: var(--error-red);' onclick="cancelHotel()">Cancel</button></td>
+            <td><button style='background-color: var(--error-red);' onclick="cancelHotel(event)">Cancel</button></td>
         </tr>
     `;
 
@@ -928,16 +1164,23 @@ function selectHotel(hotelID, hotelName, city, price) {
 function toggleHotelTable() {
     const addHotel = document.getElementById('add-hotel').checked;
     const hotelTableContainer = document.getElementById('hotel-table-container');
+    const hotelHeader = document.getElementById('hotel-table-header');
 
     if (addHotel) {
         hotelTableContainer.style.display = 'block';
         fetchAvailableHotels(); // Ensure this does not reset the header or table
     } else {
         hotelTableContainer.style.display = 'none';
+        selectedHotelID = null;
+        hotelHeader.textContent = 'Available Hotels';
     }
 }
 
-function cancelHotel(hotelID) {
+function cancelHotel(event) {
+    if (event) {
+        event.preventDefault(); // Prevent the default form submission behavior
+    }
+
     const hotelTable = document.getElementById('hotel-table');
     const hotelHeader = document.getElementById('hotel-table-header');
 
@@ -963,7 +1206,7 @@ function selectCar(carID, carModel, city, price) {
             <td>${carModel}</td>
             <td>${city}</td>
             <td>${price}€</td>
-            <td><button style='background-color: var(--error-red);' onclick="cancelCar()">Cancel</button></td>
+            <td><button style='background-color: var(--error-red);' onclick="cancelCar(event)">Cancel</button></td>
         </tr>
     `;
     selectedCarID = carID;
@@ -972,17 +1215,24 @@ function selectCar(carID, carModel, city, price) {
 function toggleCarTable() {
     const addCar = document.getElementById('add-car').checked;
     const carTableContainer = document.getElementById('car-table-container');
+    const carHeader = document.getElementById('car-table-header');
 
     if (addCar) {
         carTableContainer.style.display = 'block';
         fetchAvailableCars(); // Ensure this does not reset the header or table
     } else {
         carTableContainer.style.display = 'none';
+        selectedCarID = null;
+        carHeader.textContent = 'Available Cars';
     }
 }
 
-function cancelCar(carID) {
-    const carTable = document.getElementById('hotel-table');
+function cancelCar(event) {
+    if (event) {
+        event.preventDefault(); // Prevent the default form submission behavior
+    }
+
+    const carTable = document.getElementById('car-table');
     const carHeader = document.getElementById('car-table-header');
 
     // Reset header

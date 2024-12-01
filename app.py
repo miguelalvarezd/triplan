@@ -391,6 +391,42 @@ def cancel_booking(booking_id):
         return jsonify({'message': 'Error cancelling booking.', 'success': False, 'error': str(ex)}), 500
     
 
+@app.route('/api/flights/between/<origen>/<destino>', methods=['GET'])
+def check_flight_between(origen, destino):
+    try:
+        cursor = conexion.connection.cursor()
+        # SQL query to find flights between the origin and destination airports
+        sql = """
+            SELECT T.ID_TRAYECTO, T.ORIGEN, T.DESTINO, T.HORA_SALIDA, T.HORA_LLEGADA
+            FROM TRAYECTOS T
+            WHERE T.ORIGEN = %s AND T.DESTINO = %s
+            ORDER BY T.DESTINO, T.HORA_SALIDA;
+        """
+
+        # Execute the query with both origin and destination airport codes
+        cursor.execute(sql, (origen, destino))
+        flights = cursor.fetchall()
+
+        if flights:
+            return jsonify({
+                'flights': [
+                    {
+                        'id_trayecto': flight[0],
+                        'origen': flight[1],
+                        'destino': flight[2],
+                        'hora_salida': format_timedelta(flight[3]),
+                        'hora_llegada': format_timedelta(flight[4])
+                    } for flight in flights
+                ],
+                'message': 'Flights found',
+                'success': True
+            })
+        else:
+            return jsonify({'message': 'No flights found between the specified cities.', 'success': False})
+    except Exception as ex:
+        return jsonify({'success': False, 'message': str(ex)})
+    
+
 @app.route('/api/flights/check/<id_trayecto>/<date>', methods=['GET'])
 def check_flight(id_trayecto, date):
     try:
@@ -516,19 +552,76 @@ def create_reservation():
 
         # Handle hotel reservation
         if id_hotel is not None:
-            # while True:
-            #     numero_habitacion = random.randint(12, 12)
-            #     sql_check_habitacion = "SELECT COUNT(*) FROM RESERVAS_HOTEL WHERE ID_HOTEL = %s AND NUMERO_HABITACION = %s"
-            #     cursor.execute(sql_check_habitacion, (id_hotel, numero_habitacion))
-            #     if cursor.fetchone()[0] == 0:
-            #         break
+            while True:
+                # Generate a random room number
+                numero_habitacion = random.randint(1, 100)  # Use appropriate range based on hotel capacity
+                
+                # Check if the room number is within the hotel's NUMERO_HABITACIONES
+                sql_check_capacity = "SELECT HABITACIONES_TOTALES FROM HOTELES WHERE ID_HOTEL = %s"
+                cursor.execute(sql_check_capacity, (id_hotel,))
+                max_rooms = cursor.fetchone()
+                
+                if not max_rooms or numero_habitacion > max_rooms[0]:
+                    continue  # Retry with a new room number if out of range
 
-            numero_habitacion = 15
+                # Check if the room is already reserved
+                sql_check_reservas = """
+                    SELECT COUNT(*)
+                    FROM RESERVAS_HOTEL RH
+                    JOIN RESERVAS R ON RH.ID_RESERVA = R.ID_RESERVA
+                    WHERE RH.ID_HOTEL = %s
+                    AND RH.NUMERO_HABITACION = %s
+                    AND (
+                            (%s BETWEEN R.FECHA_INICIO AND R.FECHA_FINAL) OR
+                            (%s BETWEEN R.FECHA_INICIO AND R.FECHA_FINAL) OR
+                            (R.FECHA_INICIO BETWEEN %s AND %s) OR
+                            (R.FECHA_FINAL BETWEEN %s AND %s)
+                        )
+                """
+                cursor.execute(sql_check_reservas, (
+                    id_hotel,
+                    numero_habitacion,
+                    fecha_inicio,  # Your reservation start date
+                    fecha_final,     # Your reservation end date
+                    fecha_inicio,
+                    fecha_final,
+                    fecha_inicio,
+                    fecha_final
+                ))
+                overlap_count = cursor.fetchone()[0]
 
-            sql_create_reserva_hotel = "INSERT INTO RESERVAS_HOTEL (ID_RESERVA, ID_HOTEL, NUMERO_HABITACION) VALUES (%s, %s, %s)"
+                if overlap_count > 0:
+                    continue  # Retry if the room is already reserved
+
+                # Check if the room exists in the HABITACIONES table
+                sql_check_habitacion = "SELECT COUNT(*) FROM HABITACIONES WHERE ID_HOTEL = %s AND NUMERO_HABITACION = %s"
+                cursor.execute(sql_check_habitacion, (id_hotel, numero_habitacion))
+                if cursor.fetchone()[0] == 0:
+                    # Room does not exist in HABITACIONES, create it
+                    # Generate random values for new room attributes
+                    precio_extra = random.randint(50, 200)  # Replace with appropriate range
+                    tipos_disponibles = ['DOUBLE', 'SUITE', 'SINGLE', 'DELUXE', 'FAMILY']  # Adjust available types as necessary
+                    tipo_habitacion = random.choice(tipos_disponibles)
+
+                    # Insert new room into HABITACIONES
+                    sql_create_habitacion = """
+                        INSERT INTO HABITACIONES (ID_HOTEL, NUMERO_HABITACION, PRECIO_EXTRA, TIPO_HABITACION)
+                        VALUES (%s, %s, %s, %s)
+                    """
+                    cursor.execute(sql_create_habitacion, (id_hotel, numero_habitacion, precio_extra, tipo_habitacion))
+
+                # Room is valid and available, exit loop
+                break
+
+            # Create a reservation for the room
+            sql_create_reserva_hotel = """
+                INSERT INTO RESERVAS_HOTEL (ID_RESERVA, ID_HOTEL, NUMERO_HABITACION) 
+                VALUES (%s, %s, %s)
+            """
             cursor.execute(sql_create_reserva_hotel, (id_reserva, id_hotel, numero_habitacion))
 
-       # Handle car reservation
+
+        # Handle car reservation
         if matricula_coche is not None:
             # Check that the car exists
             sql_check_car_exists = """
@@ -540,15 +633,30 @@ def create_reservation():
             if cursor.fetchone()[0] != 1:
                 return jsonify({'success': False, 'message': 'Car does not exist.'}), 404
 
-            # # Check if the car is already reserved
-            # sql_check_car_reserved = """
-            #     SELECT COUNT(*) 
-            #     FROM RESERVAS_COCHE 
-            #     WHERE MATRICULA_COCHE = %s
-            # """
-            # cursor.execute(sql_check_car_reserved, (matricula_coche,))
-            # if cursor.fetchone()[0] > 0:
-            #     return jsonify({'success': False, 'message': 'Car is already reserved.'}), 400
+            # Check if the car is already reserved for the given dates
+            sql_check_car_reserved = """
+                SELECT COUNT(*) 
+                FROM RESERVAS_COCHE RC
+                JOIN RESERVAS R ON RC.ID_RESERVA = R.ID_RESERVA
+                WHERE RC.MATRICULA_COCHE = %s
+                AND (
+                        (%s BETWEEN R.FECHA_INICIO AND R.FECHA_FINAL) OR
+                        (%s BETWEEN R.FECHA_INICIO AND R.FECHA_FINAL) OR
+                        (R.FECHA_INICIO BETWEEN %s AND %s) OR
+                        (R.FECHA_FINAL BETWEEN %s AND %s)
+                    )
+            """
+            cursor.execute(sql_check_car_reserved, (
+                matricula_coche,
+                fecha_inicio,
+                fecha_final,
+                fecha_inicio,
+                fecha_final,
+                fecha_inicio,
+                fecha_final
+            ))
+            if cursor.fetchone()[0] > 0:
+                return jsonify({'success': False, 'message': 'Car is already reserved for the selected dates.'}), 400
 
             # Insert the car reservation
             sql_create_reserva_coche = "INSERT INTO RESERVAS_COCHE (ID_RESERVA, MATRICULA_COCHE) VALUES (%s, %s)"
@@ -565,6 +673,55 @@ def create_reservation():
             'id_vuelo': id_vuelo,
             'fecha_inicio': fecha_inicio,
             'fecha_final': fecha_final,
+            'numero_asiento': numero_asiento
+        })
+
+    except Exception as ex:
+        return jsonify({'success': False, 'message': str(ex)})
+    
+@app.route('/api/flight/booking/add', methods=['POST'])
+def add_flight():
+    try:
+        import random
+
+        data = request.json
+        id_reserva = data['ID_RESERVA']
+        id_vuelo = data['ID_VUELO']
+        numero_asiento = data['NUMERO_ASIENTO']
+
+        cursor = conexion.connection.cursor()
+
+        # Obtain ID_TRAYECTO from the VUELOS table
+        sql_get_trayecto = "SELECT ID_TRAYECTO FROM VUELOS WHERE ID_VUELO = %s"
+        cursor.execute(sql_get_trayecto, (id_vuelo,))
+        id_trayecto_row = cursor.fetchone()
+
+        if not id_trayecto_row:
+            return jsonify({'success': False, 'message': 'ID_TRAYECTO not found for the given ID_VUELO.'}), 404
+
+        id_trayecto = id_trayecto_row[0]
+
+        # Generate a unique NUMERO_BILLETE
+        while True:
+            numero_billete = f"{id_trayecto}-{random.randint(1000, 9999)}"
+            sql_check_billete = "SELECT COUNT(*) FROM RESERVAS_AVION WHERE NUMERO_BILLETE = %s"
+            cursor.execute(sql_check_billete, (numero_billete,))
+            if cursor.fetchone()[0] == 0:
+                break
+
+        # Create new reservation entry in RESERVAS_VUELOS
+        sql_create_reserva_vuelo = "INSERT INTO RESERVAS_AVION (ID_RESERVA, ID_VUELO, NUMERO_ASIENTO, NUMERO_BILLETE) VALUES (%s, %s, %s, %s)"
+        cursor.execute(sql_create_reserva_vuelo, (id_reserva, id_vuelo, numero_asiento, numero_billete))
+
+
+        conexion.connection.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Reservation created successfully.',
+            'id_reserva': id_reserva,
+            'numero_billete': numero_billete,
+            'id_vuelo': id_vuelo,
             'numero_asiento': numero_asiento
         })
 

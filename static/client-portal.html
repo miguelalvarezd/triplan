@@ -148,18 +148,56 @@
                     <h2>Book Flight</h2>
                     <form id="book-flight-form">
                         <label for="departure-date">Departure Date:</label>
-                        <input type="date" id="departure-date" required >
+                        <input type="date" id="departure-date"  name="departure-date" onchange="handleContinue()" required >
+
+                        <div id="return-date-selection" style="display: none;">
+                            <label for="return-date">Return Date:</label>
+                            <input type="date" id="return-date" name="return-date" onchange="handleReturnDate()" required>
+                        </div>
+
+                        <!-- Continue Button -->
+                        <button type="button" id="continue-button" onclick="handleContinue()">Continue</button>
+                        
+                        <div id="seat-selection" style="display: none;">
+                            <label for="seat-number">Select Seat Number:</label>
+                            <select id="seat-number"></select>
+                        </div>
+
+                        <div id="seat-selection-return" style="display: none;">
+                            <label for="seat-number-return">Select Seat Number for the Return Flight:</label>
+                            <select id="seat-number-return"></select>
+                        </div>
 
                         <!-- Checkboxes for Hotel and Car -->
                         <div class="checkbox-container">
                             <label>
-                                <input type="checkbox" id="add-hotel" onchange="toggleHotelTable()"> Add Hotel
+                                <input type="checkbox" id="add-return-flight" name="add-return-flight" onchange="toggleReturnFlight()"> Add Return Flight
                             </label>
                             <label>
-                                <input type="checkbox" id="add-car" onchange="toggleCarTable()"> Add Car
+                                <input type="checkbox" id="add-hotel" name="add-hotel" onchange="toggleHotelTable()"> Add Hotel
+                            </label>
+                            <label>
+                                <input type="checkbox" id="add-car" name="add-car" onchange="toggleCarTable()"> Add Car
                             </label>
                         </div>
-                        
+
+                        <!-- Return Table -->
+                        <div id="return-table-container" style="display: none;">
+                            <h3 id="return-table-header">Available Flights</h3>
+                            <table id="return-flight-table" class="styled-table"> 
+                                <thead>
+                                    <tr>
+                                        <th>Flight ID</th>
+                                        <th>Origin</th>
+                                        <th>Destination</th>
+                                        <th>Departure Time</th>
+                                        <th>Arrival Time</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
 
                         <!-- Hotel Table -->
                         <div id="hotel-table-container" style="display: none;">
@@ -193,13 +231,7 @@
                             </table>
                         </div>
 
-                        <!-- Continue Button -->
-                        <button type="button" id="continue-button" onclick="handleContinue()">Continue</button>
                         
-                        <div id="seat-selection" style="display: none;">
-                            <label for="seat-number">Select Seat Number:</label>
-                            <select id="seat-number"></select>
-                        </div>
                         
                         <!-- Confirm Booking Button -->
                         <button type="button" id="confirm-button" style="display: none;" onclick="submitBooking()">Confirm Booking</button>
