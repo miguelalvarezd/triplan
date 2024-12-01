@@ -473,6 +473,10 @@ def create_reservation():
         fecha_final = data['FECHA_FINAL']
         id_vuelo = data['ID_VUELO']
         numero_asiento = data['NUMERO_ASIENTO']
+        id_hotel = data['ID_HOTEL']
+        matricula_coche = data['MATRICULA_COCHE']
+
+        print(id_hotel, matricula_coche)
 
         cursor = conexion.connection.cursor()
 
@@ -510,6 +514,47 @@ def create_reservation():
         sql_create_reserva_vuelo = "INSERT INTO RESERVAS_AVION (ID_RESERVA, ID_VUELO, NUMERO_ASIENTO, NUMERO_BILLETE) VALUES (%s, %s, %s, %s)"
         cursor.execute(sql_create_reserva_vuelo, (id_reserva, id_vuelo, numero_asiento, numero_billete))
 
+        # Handle hotel reservation
+        if id_hotel is not None:
+            # while True:
+            #     numero_habitacion = random.randint(12, 12)
+            #     sql_check_habitacion = "SELECT COUNT(*) FROM RESERVAS_HOTEL WHERE ID_HOTEL = %s AND NUMERO_HABITACION = %s"
+            #     cursor.execute(sql_check_habitacion, (id_hotel, numero_habitacion))
+            #     if cursor.fetchone()[0] == 0:
+            #         break
+
+            numero_habitacion = 15
+
+            sql_create_reserva_hotel = "INSERT INTO RESERVAS_HOTEL (ID_RESERVA, ID_HOTEL, NUMERO_HABITACION) VALUES (%s, %s, %s)"
+            cursor.execute(sql_create_reserva_hotel, (id_reserva, id_hotel, numero_habitacion))
+
+       # Handle car reservation
+        if matricula_coche is not None:
+            # Check that the car exists
+            sql_check_car_exists = """
+                SELECT COUNT(*) 
+                FROM COCHES 
+                WHERE MATRICULA_COCHE = %s
+            """
+            cursor.execute(sql_check_car_exists, (matricula_coche,))
+            if cursor.fetchone()[0] != 1:
+                return jsonify({'success': False, 'message': 'Car does not exist.'}), 404
+
+            # # Check if the car is already reserved
+            # sql_check_car_reserved = """
+            #     SELECT COUNT(*) 
+            #     FROM RESERVAS_COCHE 
+            #     WHERE MATRICULA_COCHE = %s
+            # """
+            # cursor.execute(sql_check_car_reserved, (matricula_coche,))
+            # if cursor.fetchone()[0] > 0:
+            #     return jsonify({'success': False, 'message': 'Car is already reserved.'}), 400
+
+            # Insert the car reservation
+            sql_create_reserva_coche = "INSERT INTO RESERVAS_COCHE (ID_RESERVA, MATRICULA_COCHE) VALUES (%s, %s)"
+            cursor.execute(sql_create_reserva_coche, (id_reserva, matricula_coche))
+
+
         conexion.connection.commit()
 
         return jsonify({
@@ -526,6 +571,37 @@ def create_reservation():
     except Exception as ex:
         return jsonify({'success': False, 'message': str(ex)})
 
+@app.route('/api/hotels/<city>', methods=['GET'])
+def get_hotels(city):
+    try:
+        cursor = conexion.connection.cursor()
+        sql_query = "SELECT ID_HOTEL, NOMBRE_HOTEL, CIUDAD, DIRECCION, PRECIO_POR_NOCHE FROM HOTELES WHERE CIUDAD = %s"
+        cursor.execute(sql_query, (city,))
+        hotels = cursor.fetchall()
+
+        if hotels:
+            hotel_list = [{'id': hotel[0], 'name': hotel[1], 'city': hotel[2], 'price': hotel[4]} for hotel in hotels]
+            return jsonify({'success': True, 'hotels': hotel_list})
+        else:
+            return jsonify({'success': False, 'message': 'No hotels available in this city.'})
+    except Exception as ex:
+        return jsonify({'success': False, 'message': str(ex)})
+
+@app.route('/api/cars/<city>', methods=['GET'])
+def get_cars(city):
+    try:
+        cursor = conexion.connection.cursor()
+        sql_query = "SELECT MATRICULA_COCHE, MODELO_COCHE, AEROPUERTO, PRECIO_POR_DIA FROM COCHES WHERE AEROPUERTO = %s"
+        cursor.execute(sql_query, (city,))
+        cars = cursor.fetchall()
+
+        if cars:
+            car_list = [{'id': car[0], 'model': car[1], 'location': car[2], 'price': car[3]} for car in cars]
+            return jsonify({'success': True, 'cars': car_list})
+        else:
+            return jsonify({'success': False, 'message': 'No cars available in this city.'})
+    except Exception as ex:
+        return jsonify({'success': False, 'message': str(ex)})
 
 
 

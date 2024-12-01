@@ -763,6 +763,19 @@ footer {
     transition: background-color 0.3s ease;
 }
 
+#bookFlightModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto; /* Enable scrolling if content exceeds modal height */
+}
+
 #bookFlightModal .modal-content {
     position: relative;
     background-color: var(--background-light);
@@ -770,8 +783,10 @@ footer {
     padding: 2rem;
     width: 80%;
     max-width: 800px;
+    /* max-height: 90%; Ensure content doesn't exceed modal height */
     border-radius: var(--radius);
     box-shadow: var(--shadow);
+    overflow-y: auto; /* Enable scrolling for content inside the modal */
 }
 
 #bookFlightModal .close {
@@ -790,7 +805,7 @@ footer {
 #bookFlightModal h2 {
     margin-bottom: 1.5rem;
     color: var(--primary-dark);
-}
+}   
 
 #book-button {
     /* background-color: var(--error-red); */
@@ -837,4 +852,64 @@ footer {
 
 #close-booking-summary:hover {
     background-color: var(--background-dark);
+}
+
+#hotel-table-container, #car-table-container {
+    padding: 1rem;
+    background-color: var(--background-light);
+    /* border-radius: 5px;
+    box-shadow: var(--shadow); */
+}
+
+table button {
+    padding: 0.5rem 1rem;
+    background-color: var(--primary-dark);
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+table button:hover {
+    background-color: var(--background-dark);
+}
+/* Styled checkboxes */
+input[type="checkbox"] {
+    appearance: none; /* Remove default styling */
+    width: 35px; /* Adjust size for symmetry */
+    height: 35px; /* Make it a square */
+    border: 2px solid var(--primary-dark); /* Border to match the theme */
+    border-radius: var(--radius); /* Rounded corners for modern look */
+    background-color: var(--white); /* Default background */
+    cursor: pointer;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    margin-right: 0.5rem; /* Space between checkbox and label */
+    display: inline-block;
+    position: relative; /* Required for pseudo-element positioning */
+    vertical-align: middle;
+}
+
+input[type="checkbox"]:checked {
+    background-color: var(--primary-dark); /* Checked state background */
+    border-color: var(--primary-light); /* Change border color when checked */
+    box-shadow: 0 0 4px var(--primary-light); /* Add subtle glow */
+}
+
+input[type="checkbox"]:checked::after {
+    content: '✔'; /* Checkmark */
+    color: var(--white); /* Color of the checkmark */
+    font-size: 16px; /* Adjust size */
+    position: absolute;
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Adjust position to center */
+}
+
+/* Full-width container for checkboxes */
+.checkbox-container {
+    width: 100%; /* Full width */
+    display: flex; /* Align children */
+    flex-direction: row; /* Stack checkboxes horizontally */
+    justify-content: center; /* Center the checkboxes */
+    gap: 1rem; /* Space between checkboxes */
+    padding: 0; /* Remove default padding */
 }

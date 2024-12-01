@@ -1,5 +1,9 @@
 // CLIENT PORTAL SCRIPTS
 let currentRouteID = null;
+let currentFlightDestination = null; // Global variable to store the destination
+let selectedHotelID = null;
+let selectedCarID = null;
+
 const bookFlightModal = document.getElementById('bookFlightModal');
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -7,6 +11,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const welcomeMessage = document.getElementById('welcome-message');
     const clientInfoModal = document.getElementById('clientInfoModal');
     const bookingTable = document.getElementById('summary-table');
+
+    if (bookFlightModal) {
+        bookFlightModal.style.display = 'none'; // Ensure modal is hidden initially
+    }
 
     // For client-portal.html
     if (welcomeMessage && clientInfoModal && bookingTable) {
@@ -623,6 +631,7 @@ function closeTables() {
     document.getElementById('close-tables-button').style.display = 'none';
 }
 
+
 function searchFlights(event) {
     event.preventDefault();
 
@@ -638,7 +647,7 @@ function searchFlights(event) {
     flightsTable.style.display = 'none';
     noFlightsMessage.style.display = 'none';
 
-    // Send data via GET or POST
+    // Send data via GET
     fetch(`http://localhost:5000/api/flights/route?origin=${encodeURIComponent(cityOrigin)}&destination=${encodeURIComponent(cityDestination)}`, {
         method: 'GET', // Use GET for retrieving data
         headers: { 'Content-Type': 'application/json' },
@@ -655,7 +664,7 @@ function searchFlights(event) {
                     <td>${flight.hora_salida}</td>
                     <td>${flight.hora_llegada}</td>
                     <td>
-                        <button id='book-button' onclick="openBookFlightModal('${flight.id_trayecto}')">Book</button>
+                        <button id='book-button' onclick="openBookFlightModal('${flight.id_trayecto}', '${flight.destino}')">Book</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -674,13 +683,17 @@ function searchFlights(event) {
     });
 }
 
-function openBookFlightModal(RouteID) {
-    currentRouteID = RouteID;
+function openBookFlightModal(routeID, destination) {
+    currentRouteID = routeID;
+    currentFlightDestination = destination; // Save the destination
+    console.log(`Current Destination: ${currentFlightDestination}`); // Debugging
+
     document.getElementById('seat-selection').style.display = 'none';
     document.getElementById('continue-button').style.display = 'inline-block';
     document.getElementById('confirm-button').style.display = 'none';
     bookFlightModal.style.display = 'block';
 }
+
 
 function closeBookFlightModal() {
     currentRouteID = null;
@@ -779,6 +792,8 @@ async function submitBooking() {
                 FECHA_FINAL: departureDate,
                 ID_VUELO: createdFlightID,
                 NUMERO_ASIENTO: seatNumber,
+                ID_HOTEL: selectedHotelID,
+                MATRICULA_COCHE: selectedCarID,
             }),
         });
 
@@ -837,7 +852,146 @@ function printSummary() {
     // printWindow.print();
 }
 
+async function fetchAvailableHotels() {
+    try {
+        const destination = currentFlightDestination; // Set destination dynamically
+        const response = await fetch(`http://localhost:5000/api/hotels/${destination}`);
+        const data = await response.json();
 
+        if (data.success) {
+            const tableBody = document.getElementById('hotel-table').querySelector('tbody');
+            tableBody.innerHTML = ''; // Clear previous data
+            data.hotels.forEach(hotel => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${hotel.name}</td>
+                    <td>${hotel.city}</td>
+                    <td>${hotel.price}€</td>
+                    <td><button onclick="selectHotel('${hotel.id}', '${hotel.name}', '${hotel.city}', '${hotel.price}')">Select</button></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching hotels:', error);
+    }
+}
+
+async function fetchAvailableCars() {
+    try {
+        const destination = currentFlightDestination; // Set destination dynamically
+        const response = await fetch(`http://localhost:5000/api/cars/${destination}`);
+        const data = await response.json();
+
+        if (data.success) {
+            const tableBody = document.getElementById('car-table').querySelector('tbody');
+            tableBody.innerHTML = ''; // Clear previous data
+            data.cars.forEach(car => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${car.model}</td>
+                    <td>${car.location}</td>
+                    <td>${car.price}€</td>   
+                    <td><button onclick="selectCar('${car.id}', '${car.model}', '${car.location}', '${car.price}')">Select</button></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching cars:', error);
+    }
+}
+
+function selectHotel(hotelID, hotelName, city, price) {
+    const hotelTable = document.getElementById('hotel-table');
+    const hotelHeader = document.getElementById('hotel-table-header');
+
+    // Update header only if not already selected
+    if (hotelHeader.textContent !== 'Selected Hotel') {
+        hotelHeader.textContent = 'Selected Hotel';
+    }
+
+    // Clear table and display selected hotel
+    hotelTable.querySelector('tbody').innerHTML = `
+        <tr>
+            <td>${hotelName}</td>
+            <td>${city}</td>
+            <td>${price}€</td>
+            <td><button style='background-color: var(--error-red);' onclick="cancelHotel()">Cancel</button></td>
+        </tr>
+    `;
+
+    // Store the selected hotel ID
+    selectedHotelID = hotelID;
+}
+
+function toggleHotelTable() {
+    const addHotel = document.getElementById('add-hotel').checked;
+    const hotelTableContainer = document.getElementById('hotel-table-container');
+
+    if (addHotel) {
+        hotelTableContainer.style.display = 'block';
+        fetchAvailableHotels(); // Ensure this does not reset the header or table
+    } else {
+        hotelTableContainer.style.display = 'none';
+    }
+}
+
+function cancelHotel(hotelID) {
+    const hotelTable = document.getElementById('hotel-table');
+    const hotelHeader = document.getElementById('hotel-table-header');
+
+    // Reset header
+    hotelHeader.textContent = 'Available Hotels';
+
+    toggleHotelTable(); // Reload available hotels
+    selectedHotelID = null;
+}
+
+function selectCar(carID, carModel, city, price) {
+    const carTable = document.getElementById('car-table');
+    const carHeader = document.getElementById('car-table-header');
+
+    // Update header only if not already selected
+    if (carHeader.textContent !== 'Selected Car') {
+        carHeader.textContent = 'Selected Car';
+    }
+
+    // Clear table and display selected hotel
+    carTable.querySelector('tbody').innerHTML = `
+        <tr>
+            <td>${carModel}</td>
+            <td>${city}</td>
+            <td>${price}€</td>
+            <td><button style='background-color: var(--error-red);' onclick="cancelCar()">Cancel</button></td>
+        </tr>
+    `;
+    selectedCarID = carID;
+}
+
+function toggleCarTable() {
+    const addCar = document.getElementById('add-car').checked;
+    const carTableContainer = document.getElementById('car-table-container');
+
+    if (addCar) {
+        carTableContainer.style.display = 'block';
+        fetchAvailableCars(); // Ensure this does not reset the header or table
+    } else {
+        carTableContainer.style.display = 'none';
+    }
+}
+
+function cancelCar(carID) {
+    const carTable = document.getElementById('hotel-table');
+    const carHeader = document.getElementById('car-table-header');
+
+    // Reset header
+    carHeader.textContent = 'Available Cars';
+
+    toggleCarTable(); // Reload available cars
+
+    selectedCarID = null;
+}
 
 
 

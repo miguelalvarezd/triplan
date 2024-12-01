@@ -148,8 +148,51 @@
                     <h2>Book Flight</h2>
                     <form id="book-flight-form">
                         <label for="departure-date">Departure Date:</label>
-                        <input type="date" id="departure-date" required>
+                        <input type="date" id="departure-date" required >
+
+                        <!-- Checkboxes for Hotel and Car -->
+                        <div class="checkbox-container">
+                            <label>
+                                <input type="checkbox" id="add-hotel" onchange="toggleHotelTable()"> Add Hotel
+                            </label>
+                            <label>
+                                <input type="checkbox" id="add-car" onchange="toggleCarTable()"> Add Car
+                            </label>
+                        </div>
                         
+
+                        <!-- Hotel Table -->
+                        <div id="hotel-table-container" style="display: none;">
+                            <h3 id="hotel-table-header">Available Hotels</h3>
+                            <table id="hotel-table" class="styled-table">
+                                <thead>
+                                    <tr>
+                                        <th>Hotel Name</th>
+                                        <th>City</th>
+                                        <th>Price per Night</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Car Table -->
+                        <div id="car-table-container" style="display: none;">
+                            <h3 id="car-table-header">Available Cars</h3>
+                            <table id="car-table" class="styled-table"> 
+                                <thead>
+                                    <tr>
+                                        <th>Car Model</th>
+                                        <th>Location</th>
+                                        <th>Price per Day</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
                         <!-- Continue Button -->
                         <button type="button" id="continue-button" onclick="handleContinue()">Continue</button>
                         
