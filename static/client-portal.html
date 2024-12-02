@@ -47,6 +47,13 @@
                             <!-- Data will be dynamically populated -->
                         </tbody>
                     </table>
+                    <button id="close-tables-button" onclick="deleteAccount()" >Delete Account</button>
+                    <div id="delete-account-success" class='success-message' style="display: none; text-align: center; padding: 1rem;">
+                        Account deleted successfully!
+                    </div>
+                    <div id="delete-account-fail" class='failed-message' style="display: none; text-align: center; padding: 1rem;">
+                        An error occurred while deleting your account. Please, try again
+                    </div>
                 </div>
             </div>
 

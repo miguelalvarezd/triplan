@@ -175,6 +175,18 @@ select {
     border: 1px solid var(--primary-light);
 }
 
+#manage-tiers-form input[type="text"] {
+    background-color: var(--white);
+    /* Light blue color or your desired color */
+    border: 1px solid var(--primary-light);
+}
+
+#new-tier-form select {
+    background-color: var(--white);
+    /* Light blue color or your desired color */
+    border: 1px solid var(--primary-light);
+}
+
 #book-flight-form input[type="date"] {
     background-color: var(--white);
     /* Light blue color or your desired color */
@@ -240,6 +252,10 @@ input[type="checkbox"] {
 }
 
 #tier-summary {
+    background-color: var(--background-light);
+}
+
+#manage-tiers {
     background-color: var(--background-light);
 }
 
@@ -635,6 +651,35 @@ footer {
     margin-bottom: 1.5rem;
 }
 
+#manageTiersModal .modal-content {
+    background-color: var(--background-light);
+    margin: 10% auto;
+    padding: 2rem;
+    width: 80%;
+    max-width: 800px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    position: relative;
+}
+
+#manageTiersModal .close {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--secondary);
+}
+
+#manageTiersModal .close:hover {
+    color: var(--primary-dark);
+}
+
+#manageTiersModal h2 {
+    color: var(--primary-dark);
+    margin-bottom: 1.5rem;
+}
+
 #cancel-tier {
     background-color: var(--error-red);
     color: var(--white);
@@ -649,6 +694,20 @@ footer {
     background-color: var(--error-red-dark);
 }
 
+#cancel-new-tier {
+    background-color: var(--error-red);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-left: auto;
+}
+
+#cancel-new-tier:hover {
+    background-color: var(--error-red-dark);
+}
+
 #edit-tiers-buttons {
     margin-top: 1rem;
     /* padding: 0.5rem 2rem; */
@@ -659,12 +718,14 @@ footer {
 
 }
 
-#edit-tier {
-    background-color: var(--primary-dark);
-}
+#manage-tiers-buttons {
+    margin-top: 1rem;
+    /* padding: 0.5rem 2rem; */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 
-#edit-tier:hover {
-    background-color: var(--secondary);
 }
 
 #cancel-booking {

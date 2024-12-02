@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
-            const response = await fetch(`http://localhost:5000/api/tiers`, {
+            const response = await fetch(`http://localhost:5000/api/tiers/edit`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tier: currentTier, discount: newDiscount })
@@ -635,6 +635,49 @@ function closeTables() {
     document.getElementById('close-tables-button').style.display = 'none';
 }
 
+async function deleteAccount() {
+    const dni = localStorage.getItem('customerDNI');
+
+    if (confirm("Are you sure you want to delete your account?")) {
+        try {
+            if (!dni) {
+                alert('No DNI found.');
+                return;
+            }
+
+            const response = await fetch(`http://localhost:5000/api/customers/delete/${dni}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                document.getElementById('delete-account-fail').style.display = 'none'; // Hide any previous errors
+                document.getElementById('delete-account-success').textContent = data.message || 'Account deleted successfully!';
+                document.getElementById('delete-account-success').style.display = 'block';
+                populateBookingSummary(); // Refresh the booking table
+
+                setTimeout(() => {
+                    localStorage.removeItem('customerDNI');
+                    localStorage.removeItem('customerName');
+
+                    // Redirect to the login page
+                    window.location.href = 'http://localhost:5000/';
+                }, 1000);
+            } else {
+                // Display the error message from the API
+                document.getElementById('delete-account-fail').textContent = data.message || 'Failed to delete account.';
+                document.getElementById('delete-account-fail').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error canceling booking:', error);
+            document.getElementById('delete-account-fail').textContent = 'An error occurred while deleting the account. Please try again later.';
+            document.getElementById('delete-account-fail').style.display = 'block';
+        }
+    }
+}
+
 
 function searchFlights(event) {
     event.preventDefault();
@@ -897,7 +940,6 @@ function cancelReturnFlight(event) {
     selectedReturnRouteID = null;
 }
 
-
 async function submitBooking() {
     const departureDate = document.getElementById('departure-date').value;
     const seatNumber = document.getElementById('seat-number').value;
@@ -1066,7 +1108,6 @@ function populateBookingReceipt(id_reserva, departureDate, seatNumber, returnDat
     summaryDetails.innerHTML = summary;
     document.getElementById('booking-summary-content').style.display = 'block';
 }
-
 
 function closeSummary() {
     const bookingSummary = document.getElementById('booking-summary-content');
@@ -1242,6 +1283,121 @@ function cancelCar(event) {
 
     selectedCarID = null;
 }
+
+
+
+async function manageTiers(event){
+    event.preventDefault();
+
+    const dni = document.getElementById('dni-manage-tier').value;
+    const manageTiersModal = document.getElementById('manageTiersModal');
+    
+    const modalTierClientDNI = document.getElementById('modal-tier-client-dni');
+    const modalTierClientName = document.getElementById('modal-tier-client-name');
+    const modalTierClientTier = document.getElementById('modal-tier-client-tier');
+
+    let clientName = null;
+    let clientTier = null;
+
+
+    if (!dni) return alert("Please, introduce a DNI.");
+
+    try {
+        const response = await fetch(`http://localhost:5000/api/customers/${dni}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const client = data.customer;
+
+            clientName = client.name;
+            clientTier = client.tier;
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        console.error("Error fetching client data:", error);
+        alert("Failed to load client data. Please try again.");
+    }
+
+    modalTierClientName.textContent = clientName;
+    modalTierClientDNI.textContent = dni;
+    modalTierClientTier.textContent = clientTier;
+    manageTiersModal.style.display = 'block';
+
+    try {
+        const response = await fetch(`http://localhost:5000/api/tiers`);
+        const data = await response.json();
+
+        if (data.success) {
+
+            const tierSelect = document.getElementById('new-tier')
+        
+            tierSelect.innerHTML = ''; // Clear previous options
+            data.tiers.forEach(tierObj => {
+                const option = document.createElement('option');
+                option.value = tierObj.tier;
+                option.textContent = `${tierObj.tier}`;
+                tierSelect.appendChild(option);
+            });
+        } else {
+            alert(data.message || 'No tiers available.');
+        }
+    } catch (error) {
+        console.error('Error fetching tiers:', error);
+    }
+}
+
+// Close the modal
+function closeManageTiersModal() {
+    const manageTiersModal = document.getElementById('manageTiersModal');
+    manageTiersModal.style.display = 'none';
+    document.getElementById('manage-tiers-form').reset();
+    document.getElementById('new-tier-form').reset();
+    document.getElementById('new-tier-success').style.display = 'none';
+    document.getElementById('new-tier-fail').style.display = 'none';
+};
+
+// Handle the form submission
+async function saveTier(event){
+    event.preventDefault();
+    const newTier = document.getElementById('new-tier').value;
+    const currentDNI = document.getElementById('dni-manage-tier').value;
+
+    if (!newTier) {
+        alert('No tier was selected.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:5000/api/customers/tier`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dni: currentDNI, tier: newTier })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            // alert(`Discount for ${currentTier} updated successfully!`);
+            document.getElementById('new-tier-fail').style.display = 'none';
+            document.getElementById('new-tier-success').style.display = 'block';
+            
+            setTimeout(() => {
+                window.closeManageTiersModal();
+            }, 1000);
+        } else {
+            // alert(data.message || 'Failed to update discount.');
+            document.getElementById('new-tier-fail').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error updating tier:', error);
+        alert('An error occurred while updating the tier.');
+    }
+}
+
+
+
+
+
 
 
 

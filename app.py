@@ -89,6 +89,49 @@ def get_customer(dni):
     except Exception as ex:
         return jsonify({'message': 'Error fetching customer', 'success': False, 'error': str(ex)})
 
+
+# API route for deleting customers
+@app.route('/api/customers/delete/<dni>', methods=['DELETE'])
+def delete_customer(dni):
+    try:
+        cursor = conexion.connection.cursor()
+        sql = "SELECT * FROM CLIENTES WHERE DNI = %s"
+        cursor.execute(sql, (dni,))
+        conexion.connection.commit()
+        if cursor.rowcount == 0:
+            return jsonify({'message': 'No client found with the provided DNI.', 'success': False}), 404
+
+        cursor = conexion.connection.cursor()
+        sql = "DELETE FROM CLIENTES WHERE DNI = %s"
+        cursor.execute(sql, (dni,))
+        conexion.connection.commit()
+
+        # Check if a client was deleted
+        if cursor.rowcount == 0:
+            return jsonify({'message': 'No client found with the provided DNI.', 'success': False}), 404
+
+        return jsonify({'message': 'Account deleted successfully!', 'success': True}), 200
+    except Exception as ex:
+        return jsonify({'message': 'Error deleting account.', 'success': False, 'error': str(ex)}), 500
+    
+
+# API route for editing tiers
+@app.route('/api/customers/tier', methods=['PUT'])
+def update_tier_client():
+    try:
+        data = request.json
+        tier = data['tier']
+        dni = data['dni']
+
+        cursor = conexion.connection.cursor()
+        sql = "UPDATE CLIENTES SET TIER = %s WHERE DNI = %s"
+        cursor.execute(sql, (tier, dni))
+        conexion.connection.commit()
+
+        return jsonify({'message': 'Tier updated successfully.', 'success': True})
+    except Exception as ex:
+        return jsonify({'message': 'Error updating tier.', 'success': False, 'error': str(ex)})
+
 ################
 ### BOOKINGS ###
 ################
@@ -342,7 +385,7 @@ def fetch_tiers():
         return jsonify({'message': 'Error fetching tiers', 'success': False, 'error': str(ex)})
     
 # API route for editing tiers
-@app.route('/api/tiers', methods=['PUT'])
+@app.route('/api/tiers/edit', methods=['PUT'])
 def update_tier_discount():
     try:
         data = request.json
