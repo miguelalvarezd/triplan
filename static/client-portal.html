@@ -167,12 +167,12 @@
                         
                         <div id="seat-selection" style="display: none;">
                             <label for="seat-number">Select Seat Number:</label>
-                            <select id="seat-number"></select>
+                            <select id="seat-number" onchange="updateTotalPrice()"></select>
                         </div>
 
                         <div id="seat-selection-return" style="display: none;">
                             <label for="seat-number-return">Select Seat Number for the Return Flight:</label>
-                            <select id="seat-number-return"></select>
+                            <select id="seat-number-return" onchange="updateTotalPrice()"></select>
                         </div>
 
                         <!-- Checkboxes for Hotel and Car -->
@@ -239,12 +239,34 @@
                         </div>
 
                         
+                        <div id="total-price-container">
+                            <h3>Total Price: <span id="total-price">0.00€</span></h3>
+                        </div>
+                        
                         
                         <!-- Confirm Booking Button -->
-                        <button type="button" id="confirm-button" style="display: none;" onclick="submitBooking()">Confirm Booking</button>
+                        <button type="button" id="confirm-button" style="display: none;" onclick="confirmBooking()">Confirm Booking</button>
                     </form>
+
+                    <div id="confirmationModal" class="modal">
+                        <div class="modal-content">
+                            <span class="close" onclick="closeConfirmationModal()">&times;</span>
+                            <h2>Booking Confirmation</h2>
+                            <h3>You are about to book...</h3>
+                            <ul id="confirmationMessage">
+                                <!-- Options will be populated dynamically -->
+                            </ul>
+                            <div id='confirm-booking-buttons'>
+                                <button class="cancel-bttn" onclick="closeConfirmationModal()">Cancel</button>
+                                <button onclick="submitBooking()">Confirm</button>
+                            </div>
+                        </div>
+                    </div>
+                      
+                    
                     <div id="booking-success" class="success-message" style="display: none;">Booking Successful!</div>
                     <div id="booking-fail" class="failed-message" style="display: none;">Booking Failed. Please try again.</div>
+                    
                     <div id="booking-summary-content" style="display: none;">
                         <!-- Booking details will be dynamically populated here -->
                         <div id="summary-details"></div>

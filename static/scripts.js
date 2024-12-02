@@ -7,6 +7,7 @@ let selectedCarID = null;
 let selectedReturnRouteID = null;
 let selectedReturnFlightID = null;
 let currentFlightID = null;
+let currentTotalPrice = null;
 
 const bookFlightModal = document.getElementById('bookFlightModal');
 
@@ -36,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const response = await fetch(`http://localhost:5000/api/customers/${dni}`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const tableBody = document.querySelector('#modal-client-table tbody');
                     tableBody.innerHTML = ''; // Clear previous rows
@@ -63,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.closeClientInfoModal = () => {
             clientInfoModal.style.display = 'none';
         };
-        
+
         // Ensure this is called when the page loads
         if (document.getElementById('booking-summary')) {
             populateBookingSummary();
@@ -88,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         lastScrollY = window.scrollY;
     });
-    
+
 
     const portalContainer = document.querySelector('.portal-container');
 
@@ -216,7 +217,7 @@ async function populateBookingSummary() {
     const dni = localStorage.getItem('customerDNI');
     const summaryTable = document.getElementById('summary-table');
     const noBookingsMessage = document.getElementById('no-bookings-message');
-    
+
     if (!dni) {
         console.error("No DNI found in localStorage");
         return;
@@ -247,7 +248,7 @@ async function populateBookingSummary() {
                 // Format dates if they exist
                 const startDate = booking.start_date ? new Date(booking.start_date).toLocaleDateString() : 'N/A';
                 const endDate = booking.end_date ? new Date(booking.end_date).toLocaleDateString() : 'N/A';
-                
+
                 row.innerHTML = `
                     <td>${booking.id}</td>
                     <td>${booking.dni}</td>
@@ -517,32 +518,32 @@ function manageBookings(event) {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success && data.booking) {
-            const booking = data.booking;
-            const row = document.createElement('tr');
-            row.innerHTML = `
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.booking) {
+                const booking = data.booking;
+                const row = document.createElement('tr');
+                row.innerHTML = `
                 <td>${booking.id}</td>
                 <td>${booking.dni}</td>
                 <td>${booking.start_date || 'N/A'}</td>
                 <td>${booking.end_date || 'N/A'}</td>
             `;
-            tableBody.appendChild(row);
+                tableBody.appendChild(row);
 
-            summaryTable.style.display = 'table';
-            // Show related sections and close button if booking is found
-            relatedSections.forEach(section => section.style.display = 'block');
-            closeButton.style.display = 'block';
-        } else {
+                summaryTable.style.display = 'table';
+                // Show related sections and close button if booking is found
+                relatedSections.forEach(section => section.style.display = 'block');
+                closeButton.style.display = 'block';
+            } else {
+                noBookingsMessage.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching booking:', error);
+            noBookingsMessage.textContent = 'Error loading booking. Please try again later.';
             noBookingsMessage.style.display = 'block';
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching booking:', error);
-        noBookingsMessage.textContent = 'Error loading booking. Please try again later.';
-        noBookingsMessage.style.display = 'block';
-    });
+        });
 
     // Fetch related details (flights, hotels, cars)
     const sections = {
@@ -577,44 +578,44 @@ function manageBookings(event) {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         })
-        .then(response => response.json())
-        .then(data => {
-            const section = sections[key];
+            .then(response => response.json())
+            .then(data => {
+                const section = sections[key];
 
-            if (data.success && data[key] && data[key].length > 0) {
-                const tbody = section.table.querySelector('tbody');
-                tbody.innerHTML = data[key].map(item => {
-                    if (key === 'flights') {
-                        return `<tr>
+                if (data.success && data[key] && data[key].length > 0) {
+                    const tbody = section.table.querySelector('tbody');
+                    tbody.innerHTML = data[key].map(item => {
+                        if (key === 'flights') {
+                            return `<tr>
                             <td>${item.id_vuelo}</td>
                             <td>${item.id_reserva}</td>
                             <td>${item.numero_billete}</td>
                             <td>${item.numero_asiento || 'N/A'}</td>
                         </tr>`;
-                    } else if (key === 'hotels') {
-                        return `<tr>
+                        } else if (key === 'hotels') {
+                            return `<tr>
                             <td>${item.id_reserva}</td>
                             <td>${item.id_hotel}</td>
                             <td>${item.numero_habitacion || 'N/A'}</td>
                         </tr>`;
-                    } else if (key === 'cars') {
-                        return `<tr>
+                        } else if (key === 'cars') {
+                            return `<tr>
                             <td>${item.id_reserva}</td>
                             <td>${item.matricula_coche}</td>
                         </tr>`;
-                    }
-                }).join('');
+                        }
+                    }).join('');
 
-                section.table.style.display = 'table';
-            } else {
-                section.message.style.display = 'block';
-            }
-        })
-        .catch(error => {
-            console.error(`Error fetching ${key}:`, error);
-            sections[key].message.textContent = `Error loading ${key}. Please try again later.`;
-            sections[key].message.style.display = 'block';
-        });
+                    section.table.style.display = 'table';
+                } else {
+                    section.message.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error(`Error fetching ${key}:`, error);
+                sections[key].message.textContent = `Error loading ${key}. Please try again later.`;
+                sections[key].message.style.display = 'block';
+            });
     }
 }
 
@@ -699,12 +700,12 @@ function searchFlights(event) {
         method: 'GET', // Use GET for retrieving data
         headers: { 'Content-Type': 'application/json' },
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success && data.flights) {
-            data.flights.forEach(flight => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.flights) {
+                data.flights.forEach(flight => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
                     <td>${flight.id_trayecto}</td>
                     <td>${flight.origen}</td>
                     <td>${flight.destino}</td>
@@ -714,27 +715,26 @@ function searchFlights(event) {
                         <button id='book-button' onclick="openBookFlightModal('${flight.id_trayecto}', '${flight.destino}', '${flight.origen}')">Book</button>
                     </td>
                 `;
-                tableBody.appendChild(row);
-            });
+                    tableBody.appendChild(row);
+                });
 
-            flightsTable.style.display = 'table';
-        } else {
-            noFlightsMessage.textContent = data.message || 'No flights found.';
+                flightsTable.style.display = 'table';
+            } else {
+                noFlightsMessage.textContent = data.message || 'No flights found.';
+                noFlightsMessage.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching flights:', error);
+            noFlightsMessage.textContent = 'Error loading flights. Please try again later.';
             noFlightsMessage.style.display = 'block';
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching flights:', error);
-        noFlightsMessage.textContent = 'Error loading flights. Please try again later.';
-        noFlightsMessage.style.display = 'block';
-    });
+        });
 }
 
 function openBookFlightModal(routeID, destination, origin) {
     currentRouteID = routeID;
     currentFlightDestination = destination; // Save the destination
     currentFlightOrigin = origin;
-    console.log(`Current Destination: ${currentFlightDestination}`); // Debugging
 
     toggleCarTable();
     toggleHotelTable();
@@ -798,9 +798,9 @@ function handleContinue() {
 }
 
 async function populateSeats(departureDate, returnMode) {
-    if(returnMode == 0){
+    if (returnMode == 0) {
         routeID = currentRouteID;
-    }else if(returnMode == 1){
+    } else if (returnMode == 1) {
         routeID = selectedReturnRouteID;
     }
     try {
@@ -816,7 +816,7 @@ async function populateSeats(departureDate, returnMode) {
                 seatSelect = document.getElementById('seat-number-return');
             }
             // Now you can use seatSelect here
-            
+
 
             // const seatSelect = document.getElementById('seat-number');
             seatSelect.innerHTML = ''; // Clear previous options
@@ -826,14 +826,12 @@ async function populateSeats(departureDate, returnMode) {
                 option.textContent = `Seat ${seat}`;
                 seatSelect.appendChild(option);
             });
-            if(returnMode == 0){
+            if (returnMode == 0) {
                 currentFlightID = data.id_vuelo;
-                console.log(currentFlightID);
-            }else if(returnMode == 1){
+            } else if (returnMode == 1) {
                 selectedReturnFlightID = data.id_vuelo;
-                console.log(selectedReturnFlightID);
             }
-            
+
         } else {
             alert(data.message || 'No seats available.');
         }
@@ -842,7 +840,7 @@ async function populateSeats(departureDate, returnMode) {
     }
 }
 
-async function fetchAvailableReturnFlights(){
+async function fetchAvailableReturnFlights() {
     const returnDate = document.getElementById('return-date').value;
 
     try {
@@ -883,7 +881,7 @@ function toggleReturnFlight() {
     const container = document.getElementById('return-table-container');
     const dateSelection = document.getElementById('return-date-selection');
     const returnFlightHeader = document.getElementById('return-table-header');
-    
+
     if (addReturnFlight) {
         dateSelection.style.display = 'block';
         container.style.display = 'none'; // Hide until date is selected
@@ -895,6 +893,7 @@ function toggleReturnFlight() {
         document.getElementById('seat-selection-return').style.display = 'none';
         selectedReturnRouteID = null;
     }
+    updateTotalPrice();
 }
 
 function selectReturnFlight(routeID, origin, destination, departure, arrival) {
@@ -915,12 +914,13 @@ function selectReturnFlight(routeID, origin, destination, departure, arrival) {
             <td>${destination}</td>
             <td>${departure}</td>
             <td>${arrival}</td>
-            <td><button style="background-color: var(--error-red);" onclick="cancelReturnFlight(event)">Cancel</button></td>
+            <td><button class="cancel-bttn" onclick="cancelReturnFlight(event)">Cancel</button></td>
         </tr>
     `;
     selectedReturnRouteID = routeID;
     populateSeats(departureDate, 1);
     document.getElementById('seat-selection-return').style.display = 'block';
+    updateTotalPrice();
 }
 
 function cancelReturnFlight(event) {
@@ -938,7 +938,43 @@ function cancelReturnFlight(event) {
     handleReturnDate(); // Reload available flights
 
     selectedReturnRouteID = null;
+    updateTotalPrice();
 }
+
+// Open confirmation modal
+function openConfirmationModal(selectedOptions) {
+    const confirmationMessage = document.getElementById('confirmationMessage');
+    confirmationMessage.innerHTML = ''; // Clear previous content
+
+    // Add each option as a list item
+    selectedOptions.forEach(option => {
+        const listItem = document.createElement('li');
+        listItem.textContent = option;
+        confirmationMessage.appendChild(listItem);
+    });
+
+    document.getElementById('confirmationModal').style.display = 'block';
+}
+
+// Close confirmation modal
+function closeConfirmationModal() {
+    document.getElementById('confirmationModal').style.display = 'none';
+}
+
+// Hook into the confirm booking button
+function confirmBooking() {
+    const selectedOptions = [];
+    if (selectedReturnFlightID) {
+        selectedOptions.push("Round Trip Flight");
+    } else {
+        selectedOptions.push("One Way Flight");
+    }
+    if (selectedHotelID) selectedOptions.push("Hotel");
+    if (selectedCarID) selectedOptions.push("Car");
+
+    openConfirmationModal(selectedOptions);
+}
+
 
 async function submitBooking() {
     const departureDate = document.getElementById('departure-date').value;
@@ -946,6 +982,8 @@ async function submitBooking() {
     let returnDate = null;
     let seatNumberReturn = null;
     let id_reserva = null;
+
+    closeConfirmationModal();
 
     // Handle return flight details
     if (selectedReturnRouteID == null) {
@@ -1105,6 +1143,8 @@ function populateBookingReceipt(id_reserva, departureDate, seatNumber, returnDat
         summary += `<p><strong>Car ID:</strong> ${selectedCarID}</p>`;
     }
 
+    summary += `<h3><strong>Total Price:</strong> ${currentTotalPrice}€</h3>`;
+
     summaryDetails.innerHTML = summary;
     document.getElementById('booking-summary-content').style.display = 'block';
 }
@@ -1113,7 +1153,7 @@ function closeSummary() {
     const bookingSummary = document.getElementById('booking-summary-content');
     bookingSummary.style.display = 'none';
     closeBookFlightModal();
-    document.getElementById('book-flight-form').style.display = 'block';    
+    document.getElementById('book-flight-form').style.display = 'block';
 }
 
 function printSummary() {
@@ -1194,12 +1234,13 @@ function selectHotel(hotelID, hotelName, city, price) {
             <td>${hotelName}</td>
             <td>${city}</td>
             <td>${price}€</td>
-            <td><button style='background-color: var(--error-red);' onclick="cancelHotel(event)">Cancel</button></td>
+            <td><button class="cancel-bttn" onclick="cancelHotel(event)">Cancel</button></td>
         </tr>
     `;
 
     // Store the selected hotel ID
     selectedHotelID = hotelID;
+    updateTotalPrice();
 }
 
 function toggleHotelTable() {
@@ -1215,6 +1256,7 @@ function toggleHotelTable() {
         selectedHotelID = null;
         hotelHeader.textContent = 'Available Hotels';
     }
+    updateTotalPrice();
 }
 
 function cancelHotel(event) {
@@ -1230,6 +1272,7 @@ function cancelHotel(event) {
 
     toggleHotelTable(); // Reload available hotels
     selectedHotelID = null;
+    updateTotalPrice();
 }
 
 function selectCar(carID, carModel, city, price) {
@@ -1247,10 +1290,11 @@ function selectCar(carID, carModel, city, price) {
             <td>${carModel}</td>
             <td>${city}</td>
             <td>${price}€</td>
-            <td><button style='background-color: var(--error-red);' onclick="cancelCar(event)">Cancel</button></td>
+            <td><button class='cancel-bttn' onclick="cancelCar(event)">Cancel</button></td>
         </tr>
     `;
     selectedCarID = carID;
+    updateTotalPrice();
 }
 
 function toggleCarTable() {
@@ -1266,6 +1310,7 @@ function toggleCarTable() {
         selectedCarID = null;
         carHeader.textContent = 'Available Cars';
     }
+    updateTotalPrice();
 }
 
 function cancelCar(event) {
@@ -1282,16 +1327,56 @@ function cancelCar(event) {
     toggleCarTable(); // Reload available cars
 
     selectedCarID = null;
+    updateTotalPrice();
 }
 
+async function updateTotalPrice() {
+    const dni = localStorage.getItem('customerDNI');
+    const id_trayecto = currentRouteID;
+    const numero_asiento = document.getElementById('seat-number').value;
+    let id_hotel = null;
+    let matricula_coche = null;
+    let id_trayecto_vuelta = null;
+    let numero_asiento_vuelta = null;
 
 
-async function manageTiers(event){
+    if (selectedReturnFlightID){
+        id_trayecto_vuelta = selectedReturnRouteID;
+        numero_asiento_vuelta = document.getElementById('seat-number-return').value;
+    }
+    if (selectedHotelID) id_hotel = selectedHotelID;
+    if (selectedCarID) matricula_coche = selectedCarID;
+
+    // Send a request to the backend dummy function
+    const response = await fetch('http://localhost:5000/api/calculate_price', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            DNI: dni,
+            ID_TRAYECTO: id_trayecto,
+            ID_TRAYECTO_VUELTA: id_trayecto_vuelta,
+            NUMERO_ASIENTO: numero_asiento,
+            NUMERO_ASIENTO_VUELTA: numero_asiento_vuelta,
+            ID_HOTEL: id_hotel,
+            MATRICULA_COCHE: matricula_coche,
+        }),
+    });
+
+    const data = await response.json();
+    if (data.success) {
+        currentTotalPrice = data.totalPrice;
+        document.getElementById('total-price').textContent = `${data.totalPrice}€`;
+    } else {
+        console.error('Failed to calculate price:', data.message);
+    }
+}
+
+async function manageTiers(event) {
     event.preventDefault();
 
     const dni = document.getElementById('dni-manage-tier').value;
     const manageTiersModal = document.getElementById('manageTiersModal');
-    
+
     const modalTierClientDNI = document.getElementById('modal-tier-client-dni');
     const modalTierClientName = document.getElementById('modal-tier-client-name');
     const modalTierClientTier = document.getElementById('modal-tier-client-tier');
@@ -1305,7 +1390,7 @@ async function manageTiers(event){
     try {
         const response = await fetch(`http://localhost:5000/api/customers/${dni}`);
         const data = await response.json();
-        
+
         if (data.success) {
             const client = data.customer;
 
@@ -1331,7 +1416,7 @@ async function manageTiers(event){
         if (data.success) {
 
             const tierSelect = document.getElementById('new-tier')
-        
+
             tierSelect.innerHTML = ''; // Clear previous options
             data.tiers.forEach(tierObj => {
                 const option = document.createElement('option');
@@ -1358,7 +1443,7 @@ function closeManageTiersModal() {
 };
 
 // Handle the form submission
-async function saveTier(event){
+async function saveTier(event) {
     event.preventDefault();
     const newTier = document.getElementById('new-tier').value;
     const currentDNI = document.getElementById('dni-manage-tier').value;
@@ -1380,7 +1465,7 @@ async function saveTier(event){
             // alert(`Discount for ${currentTier} updated successfully!`);
             document.getElementById('new-tier-fail').style.display = 'none';
             document.getElementById('new-tier-success').style.display = 'block';
-            
+
             setTimeout(() => {
                 window.closeManageTiersModal();
             }, 1000);
@@ -1425,7 +1510,7 @@ function handleLogin(event) {
 
     document.getElementById('loginSuccess').style.display = 'none';
     document.getElementById('loginFailed').style.display = 'none';
-    
+
     const dni = document.getElementById('username').value;
     const phone = document.getElementById('password').value;
 
@@ -1434,30 +1519,30 @@ function handleLogin(event) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dni, phone })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            localStorage.setItem('customerDNI', data.dni);
-            localStorage.setItem('customerName', data.name);
-            //alert(`Welcome, ${data.name}!`);
-            document.getElementById('loginSuccess').style.display = 'block';
-            setTimeout(() => {
-                closeClientModal();
-                // Store login state (in a real app, you'd use proper authentication)
-                localStorage.setItem('isLoggedIn', 'true');
-                // Redirect to client portal
-                window.location.href = 'static/client-portal.html';
-            }, 1000);
-            
-        } else {
-            document.getElementById('loginFailed').style.display = 'block';
-            //alert(data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred during login. Please try again.');
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                localStorage.setItem('customerDNI', data.dni);
+                localStorage.setItem('customerName', data.name);
+                //alert(`Welcome, ${data.name}!`);
+                document.getElementById('loginSuccess').style.display = 'block';
+                setTimeout(() => {
+                    closeClientModal();
+                    // Store login state (in a real app, you'd use proper authentication)
+                    localStorage.setItem('isLoggedIn', 'true');
+                    // Redirect to client portal
+                    window.location.href = 'static/client-portal.html';
+                }, 1000);
+
+            } else {
+                document.getElementById('loginFailed').style.display = 'block';
+                //alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred during login. Please try again.');
+        });
 }
 
 // Handle new client registration
@@ -1467,7 +1552,7 @@ function handleNewClient(event) {
     document.getElementById('registrationSuccess').style.display = 'none';
     document.getElementById('registrationFailed').style.display = 'none';
 
-    
+
     const dni = document.getElementById('dni').value;
     const name = document.getElementById('name').value;
     const phone = document.getElementById('phone').value;
@@ -1477,36 +1562,36 @@ function handleNewClient(event) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dni, name, phone })
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Info:', data);
-        if (data.success) {
-            //localStorage.setItem('customerDNI', data.dni);
-            // localStorage.setItem('customerName', data.name);
-            //alert(`Welcome, ${data.name}!`);
-            localStorage.setItem('customerDNI', dni);
-            localStorage.setItem('customerName', name);
-
-            document.getElementById('registrationSuccess').style.display = 'block';
-
-            setTimeout(() => {
-                closeClientModal();
-                // Store login state (in a real app, you'd use proper authentication)
-                localStorage.setItem('isLoggedIn', 'true');
-                // Redirect to client portal
-                window.location.href = 'static/client-portal.html';
-            }, 1000);
+        .then(response => response.json())
+        .then(data => {
             console.log('Info:', data);
-            
-        } else {
-            document.getElementById('registrationFailed').style.display = 'block';
-            //alert(data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred during login. Please try again.');
-    });
+            if (data.success) {
+                //localStorage.setItem('customerDNI', data.dni);
+                // localStorage.setItem('customerName', data.name);
+                //alert(`Welcome, ${data.name}!`);
+                localStorage.setItem('customerDNI', dni);
+                localStorage.setItem('customerName', name);
+
+                document.getElementById('registrationSuccess').style.display = 'block';
+
+                setTimeout(() => {
+                    closeClientModal();
+                    // Store login state (in a real app, you'd use proper authentication)
+                    localStorage.setItem('isLoggedIn', 'true');
+                    // Redirect to client portal
+                    window.location.href = 'static/client-portal.html';
+                }, 1000);
+                console.log('Info:', data);
+
+            } else {
+                document.getElementById('registrationFailed').style.display = 'block';
+                //alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred during login. Please try again.');
+        });
 }
 
 function openAgentPortal() {
@@ -1526,7 +1611,7 @@ function openAgentPortal() {
 }
 
 // Close modal when clicking outside
-window.onclick = function(event) {
+window.onclick = function (event) {
     if (event.target == document.getElementById('clientModal')) {
         closeClientModal();
     }
