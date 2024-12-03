@@ -575,6 +575,24 @@ try:
         """
         execute_query(create_table_query)
 
+                # Consulta de inserción
+        insert_query = """
+        INSERT INTO aeropuertos (CODIGO, NOMBRE, LATITUD, LONGITUD) VALUES
+        ('ATL', 'Hartsfield-Jackson Atlanta International Airport', 33.640700, -84.427700),
+        ('BOS', 'Boston Logan International Airport', 42.365600, -71.009600),
+        ('DEN', 'Denver International Airport', 39.856100, -104.673700),
+        ('DFW', 'Dallas/Fort Worth International Airport', 32.899800, -97.040300),
+        ('JFK', 'John F. Kennedy International Airport', 40.641300, -73.778100),
+        ('LAX', 'Los Angeles International Airport', 33.941600, -118.408500),
+        ('MIA', 'Miami International Airport', 25.795900, -80.287100),
+        ('ORD', 'O’Hare International Airport', 41.974200, -87.907300),
+        ('SEA', 'Seattle-Tacoma International Airport', 47.450200, -122.308800),
+        ('SFO', 'San Francisco International Airport', 37.621300, -122.379000);
+        """
+
+        # Ejecutar la consulta de inserción
+        execute_query(insert_query)
+
 
     # Función para mostrar el mapa de aeropuertos
     def plot_map_aeropuertos():
