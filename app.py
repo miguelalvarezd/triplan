@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, send_from_directory, send_file
+from flask import Flask, jsonify, request, send_from_directory, send_file, Response
 from flask_mysqldb import MySQL
 from flask_cors import CORS
 from library.airports_check import find_airports_in_radius
@@ -6,6 +6,10 @@ from library.utils import format_timedelta
 from random import choice
 import io
 import matplotlib.pyplot as plt
+from decimal import Decimal
+
+from collections import OrderedDict
+import json
 
 app = Flask(__name__, static_folder="static")
 
@@ -14,6 +18,15 @@ app.config["MYSQL_HOST"] = "localhost"
 app.config["MYSQL_USER"] = "root"
 app.config["MYSQL_PASSWORD"] = "1075"
 app.config["MYSQL_DB"] = "DB_TRIPLAN"
+
+# Custom JSON encoder
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return round(float(obj), 2)  # Convert Decimal to float
+        return super().default(obj)
+    
+app.json_encoder = CustomJSONEncoder
 
 conexion = MySQL(app)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
@@ -24,9 +37,9 @@ def serve_index():
     return send_from_directory("static", "index.html")
 
 
-################
-### CLIENTS  ###
-################
+##############################
+##########   PLOT   ##########
+##############################
 
 
 @app.route("/api/plot", methods=["GET"])
@@ -48,6 +61,11 @@ def generate_plot():
 
     # Return the buffer as a response
     return send_file(buffer, mimetype="image/png")
+
+
+##############################
+########## CLIENTS  ##########
+##############################
 
 
 # Client login
@@ -101,7 +119,7 @@ def register_customer():
         )
 
 
-# Get a returning customer
+# Get data from a returning customer
 @app.route("/api/customers/<dni>", methods=["GET"])
 def get_customer(dni):
     try:
@@ -131,7 +149,7 @@ def get_customer(dni):
         )
 
 
-# API route for deleting customers
+# Delete a customer account
 @app.route("/api/customers/delete/<dni>", methods=["DELETE"])
 def delete_customer(dni):
     try:
@@ -164,7 +182,7 @@ def delete_customer(dni):
         ), 500
 
 
-# API route for editing tiers
+# Edit a client's tier
 @app.route("/api/customers/tier", methods=["PUT"])
 def update_tier_client():
     try:
@@ -184,38 +202,38 @@ def update_tier_client():
         )
 
 
-################
-### BOOKINGS ###
-################
+##############################
+######### BOOKINGS  ##########
+##############################
 
 
 # Create a booking
-@app.route("/api/bookings", methods=["POST"])
-def create_booking():
-    try:
-        data = request.json
-        dni = data["dni"]
-        flight_id = data.get("flight_id")
-        hotel_id = data.get("hotel_id")
-        car_id = data.get("car_id")
+# @app.route("/api/bookings", methods=["POST"])
+# def create_booking():
+#     try:
+#         data = request.json
+#         dni = data["dni"]
+#         flight_id = data.get("flight_id")
+#         hotel_id = data.get("hotel_id")
+#         car_id = data.get("car_id")
 
-        cursor = conexion.connection.cursor()
-        sql = "INSERT INTO RESERVAS (DNI, ID_VUELO, ID_HOTEL, ID_COCHE) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql, (dni, flight_id, hotel_id, car_id))
-        conexion.connection.commit()
+#         cursor = conexion.connection.cursor()
+#         sql = "INSERT INTO RESERVAS (DNI, ID_VUELO, ID_HOTEL, ID_COCHE) VALUES (%s, %s, %s, %s)"
+#         cursor.execute(sql, (dni, flight_id, hotel_id, car_id))
+#         conexion.connection.commit()
 
-        booking_id = cursor.lastrowid
-        return jsonify(
-            {
-                "message": "Booking created successfully",
-                "bookingId": booking_id,
-                "success": True,
-            }
-        )
-    except Exception as ex:
-        return jsonify(
-            {"message": "Error creating booking", "success": False, "error": str(ex)}
-        )
+#         booking_id = cursor.lastrowid
+#         return jsonify(
+#             {
+#                 "message": "Booking created successfully",
+#                 "bookingId": booking_id,
+#                 "success": True,
+#             }
+#         )
+#     except Exception as ex:
+#         return jsonify(
+#             {"message": "Error creating booking", "success": False, "error": str(ex)}
+#         )
 
 
 # Get a single booking by its booking code
@@ -223,7 +241,10 @@ def create_booking():
 def get_booking(booking_code):
     try:
         cursor = conexion.connection.cursor()
-        sql = "SELECT * FROM RESERVAS WHERE ID_RESERVA = %s"
+        sql = """SELECT R.*, C.NOMBRE 
+            FROM RESERVAS R
+            JOIN CLIENTES C ON R.DNI = C.DNI
+            WHERE R.ID_RESERVA = %s"""
         cursor.execute(sql, (booking_code,))
         booking = cursor.fetchone()
 
@@ -235,6 +256,7 @@ def get_booking(booking_code):
                         "dni": booking[1],
                         "start_date": booking[2],
                         "end_date": booking[3],
+                        "name": booking[4],
                     },
                     "message": "Booking found",
                     "success": True,
@@ -283,250 +305,7 @@ def get_bookings_client(dni):
         )
 
 
-# API route for fetching flights
-@app.route("/api/flights/booking/<booking_code>", methods=["GET"])
-def fetch_flights(booking_code):
-    try:
-        cursor = conexion.connection.cursor()
-        sql = "SELECT * FROM RESERVAS_AVION WHERE ID_RESERVA = %s"
-        cursor.execute(sql, (booking_code,))
-        flights = cursor.fetchall()
-
-        if flights:
-            return jsonify(
-                {
-                    "flights": [
-                        {
-                            "id_vuelo": flight[0],
-                            "id_reserva": flight[1],
-                            "numero_billete": flight[2],
-                            "numero_asiento": flight[3],
-                        }
-                        for flight in flights
-                    ],
-                    "message": "Flights found",
-                    "success": True,
-                }
-            )
-        else:
-            return jsonify(
-                {"message": "No flights found for this booking", "success": False}
-            )
-    except Exception as ex:
-        return jsonify(
-            {"message": "Error fetching flights", "success": False, "error": str(ex)}
-        )
-
-
-# API route for fetching hotels
-@app.route("/api/hotels/booking/<booking_code>", methods=["GET"])
-def fetch_hotels(booking_code):
-    try:
-        cursor = conexion.connection.cursor()
-        sql = "SELECT * FROM RESERVAS_HOTEL WHERE ID_RESERVA = %s"
-        cursor.execute(sql, (booking_code,))
-        hotels = cursor.fetchall()
-
-        if hotels:
-            return jsonify(
-                {
-                    "hotels": [
-                        {
-                            "id_reserva": hotel[0],
-                            "id_hotel": hotel[1],
-                            "numero_habitacion": hotel[2],
-                        }
-                        for hotel in hotels
-                    ],
-                    "message": "Hotels found",
-                    "success": True,
-                }
-            )
-        else:
-            return jsonify(
-                {"message": "No hotels found for this booking", "success": False}
-            )
-    except Exception as ex:
-        return jsonify(
-            {"message": "Error fetching hotels", "success": False, "error": str(ex)}
-        )
-
-
-# API route for fetching cars
-@app.route("/api/cars/booking/<booking_code>", methods=["GET"])
-def fetch_cars(booking_code):
-    try:
-        cursor = conexion.connection.cursor()
-        sql = "SELECT * FROM RESERVAS_COCHE WHERE ID_RESERVA = %s"
-        cursor.execute(sql, (booking_code,))
-        cars = cursor.fetchall()
-
-        if cars:
-            return jsonify(
-                {
-                    "cars": [
-                        {"id_reserva": car[0], "matricula_coche": car[1]}
-                        for car in cars
-                    ],
-                    "message": "Cars found",
-                    "success": True,
-                }
-            )
-        else:
-            return jsonify(
-                {"message": "No cars found for this booking", "success": False}
-            )
-    except Exception as ex:
-        return jsonify(
-            {"message": "Error fetching cars", "success": False, "error": str(ex)}
-        )
-
-
-# API route for finding cities
-@app.route("/api/flights/route", methods=["GET"])
-def fetch_flights_by_cities():
-    try:
-        # Get query parameters for origin and destination cities
-        origin_city = request.args.get("origin")
-        destination_city = request.args.get("destination")
-
-        if not origin_city or not destination_city:
-            return jsonify(
-                {
-                    "message": "Both origin and destination cities are required.",
-                    "success": False,
-                }
-            ), 400
-
-        # Find airports near the origin city
-        origin_airports, origin_error = find_airports_in_radius(origin_city, 500)
-        if origin_error:
-            return jsonify({"message": origin_error, "success": False})
-
-        # Find airports near the destination city
-        destination_airports, destination_error = find_airports_in_radius(
-            destination_city, 500
-        )
-        if destination_error:
-            return jsonify({"message": destination_error, "success": False})
-
-        # Extract airport codes
-        origin_codes = [airport["code"] for airport in origin_airports]
-        destination_codes = [airport["code"] for airport in destination_airports]
-
-        if not origin_codes or not destination_codes:
-            return jsonify(
-                {"message": "No airports found for the given cities.", "success": False}
-            ), 404
-
-        cursor = conexion.connection.cursor()
-
-        # Dynamically create placeholders for origin and destination
-        origin_placeholders = ", ".join(["%s"] * len(origin_codes))
-        destination_placeholders = ", ".join(["%s"] * len(destination_codes))
-
-        # SQL query to find flights between the origin and destination airports
-        sql = f"""
-            SELECT T.ID_TRAYECTO, T.ORIGEN, T.DESTINO, T.HORA_SALIDA, T.HORA_LLEGADA
-            FROM TRAYECTOS T
-            WHERE T.ORIGEN IN ({origin_placeholders}) AND T.DESTINO IN ({destination_placeholders})
-            ORDER BY T.DESTINO, T.HORA_SALIDA;
-        """
-
-        # Execute the query with both origin and destination airport codes
-        cursor.execute(sql, tuple(origin_codes + destination_codes))
-        flights = cursor.fetchall()
-
-        if flights:
-            return jsonify(
-                {
-                    "flights": [
-                        {
-                            "id_trayecto": flight[0],
-                            "origen": flight[1],
-                            "destino": flight[2],
-                            "hora_salida": format_timedelta(flight[3]),
-                            "hora_llegada": format_timedelta(flight[4]),
-                        }
-                        for flight in flights
-                    ],
-                    "message": "Flights found",
-                    "success": True,
-                }
-            )
-        else:
-            return jsonify(
-                {
-                    "message": "No flights found between the specified cities.",
-                    "success": False,
-                }
-            )
-
-    except Exception as ex:
-        return jsonify(
-            {"message": "Error fetching flights", "success": False, "error": str(ex)}
-        )
-
-
-# API route for finding tiers
-@app.route("/api/tiers", methods=["GET"])
-def fetch_tiers():
-    try:
-        cursor = conexion.connection.cursor()
-
-        # Create the SQL query with placeholders
-        sql = "SELECT TIER, DESCUENTO FROM TIERS ORDER BY DESCUENTO;"
-
-        # Execute the query with the airports as parameters
-        cursor.execute(sql)
-        tiers = cursor.fetchall()
-
-        if tiers:
-            return jsonify(
-                {
-                    "tiers": [
-                        {"tier": tier[0], "descuento": tier[1] * 100} for tier in tiers
-                    ],
-                    "message": "Tiers found",
-                    "success": True,
-                }
-            )
-        else:
-            return jsonify({"message": "No tiers found.", "success": False})
-
-    except Exception as ex:
-        return jsonify(
-            {"message": "Error fetching tiers", "success": False, "error": str(ex)}
-        )
-
-
-# API route for editing tiers
-@app.route("/api/tiers/edit", methods=["PUT"])
-def update_tier_discount():
-    try:
-        data = request.json
-        tier = data["tier"]
-        discount = f"{int(data['discount']) / 100}"
-
-        cursor = conexion.connection.cursor()
-        sql = "UPDATE TIERS SET DESCUENTO = %s WHERE TIER = %s"
-        cursor.execute(sql, (discount, tier))
-        conexion.connection.commit()
-
-        return jsonify(
-            {"message": "Tier discount updated successfully.", "success": True}
-        )
-    except Exception as ex:
-        return jsonify(
-            {
-                "message": "Error updating tier discount.",
-                "success": False,
-                "error": str(ex),
-            }
-        )
-
-
-# API route for canceling bookings
+# Cancel a certain reservation (including flight, hotel and car)
 @app.route("/api/bookings/cancel/<booking_id>", methods=["DELETE"])
 def cancel_booking(booking_id):
     try:
@@ -571,141 +350,8 @@ def cancel_booking(booking_id):
         ), 500
 
 
-@app.route("/api/flights/between/<origen>/<destino>", methods=["GET"])
-def check_flight_between(origen, destino):
-    try:
-        cursor = conexion.connection.cursor()
-        # SQL query to find flights between the origin and destination airports
-        sql = """
-            SELECT T.ID_TRAYECTO, T.ORIGEN, T.DESTINO, T.HORA_SALIDA, T.HORA_LLEGADA
-            FROM TRAYECTOS T
-            WHERE T.ORIGEN = %s AND T.DESTINO = %s
-            ORDER BY T.DESTINO, T.HORA_SALIDA;
-        """
-
-        # Execute the query with both origin and destination airport codes
-        cursor.execute(sql, (origen, destino))
-        flights = cursor.fetchall()
-
-        if flights:
-            return jsonify(
-                {
-                    "flights": [
-                        {
-                            "id_trayecto": flight[0],
-                            "origen": flight[1],
-                            "destino": flight[2],
-                            "hora_salida": format_timedelta(flight[3]),
-                            "hora_llegada": format_timedelta(flight[4]),
-                        }
-                        for flight in flights
-                    ],
-                    "message": "Flights found",
-                    "success": True,
-                }
-            )
-        else:
-            return jsonify(
-                {
-                    "message": "No flights found between the specified cities.",
-                    "success": False,
-                }
-            )
-    except Exception as ex:
-        return jsonify({"success": False, "message": str(ex)})
-
-
-@app.route("/api/flights/check/<id_trayecto>/<date>", methods=["GET"])
-def check_flight(id_trayecto, date):
-    try:
-        cursor = conexion.connection.cursor()
-        # Check if flight exists
-        sql_check = (
-            "SELECT ID_VUELO FROM VUELOS WHERE ID_TRAYECTO = %s AND FECHA_VUELO = %s"
-        )
-        cursor.execute(sql_check, (id_trayecto, date))
-        vuelo = cursor.fetchone()
-
-        if vuelo:
-            id_vuelo = vuelo[0]
-            # Fetch available seats
-            sql_seats = """ SELECT NUMERO_ASIENTO 
-                            FROM ASIENTOS 
-                            WHERE NUMERO_ASIENTO NOT IN (
-                                SELECT NUMERO_ASIENTO FROM RESERVAS_AVION WHERE ID_VUELO = %s)
-                        """
-            cursor.execute(sql_seats, (id_vuelo,))
-            seats = [row[0] for row in cursor.fetchall()]
-            return jsonify(
-                {"success": True, "id_vuelo": id_vuelo, "available_seats": seats}
-            )
-        else:
-            id_vuelo = None
-            # Fetch available seats
-            sql_seats = """ SELECT NUMERO_ASIENTO 
-                            FROM ASIENTOS
-                        """
-            cursor.execute(sql_seats)
-            seats = [row[0] for row in cursor.fetchall()]
-            return jsonify(
-                {
-                    "success": True,
-                    "id_vuelo": None,
-                    "available_seats": seats,
-                    "message": "Flight not found. Create a new one.",
-                }
-            )
-    except Exception as ex:
-        return jsonify({"success": False, "message": str(ex)})
-
-
-@app.route("/api/flights/create", methods=["POST"])
-def create_flight():
-    try:
-        import random
-
-        data = request.json
-        id_trayecto = data["id_trayecto"]
-        date = data["date"]
-
-        # Assign a plane
-        cursor = conexion.connection.cursor()
-        sql_plane = "SELECT MATRICULA_AVION FROM AVIONES"
-        cursor.execute(sql_plane)
-        planes = cursor.fetchall()
-
-        if not planes:
-            return jsonify({"success": False, "message": "No planes available."}), 404
-
-        # Select a random plane
-        random_plane = choice(planes)[0]
-
-        # Generate a unique ID_VUELO
-        while True:
-            id_vuelo = random.randint(1, 99999)
-            sql_check_vuelo = "SELECT COUNT(*) FROM VUELOS WHERE ID_VUELO = %s"
-            cursor.execute(sql_check_vuelo, (id_vuelo,))
-            if cursor.fetchone()[0] == 0:
-                break
-
-        # Create new flight
-        sql_create = "INSERT INTO VUELOS (ID_VUELO, ID_TRAYECTO, FECHA_VUELO, MATRICULA_AVION) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql_create, (id_vuelo, id_trayecto, date, random_plane))
-        conexion.connection.commit()
-
-        return jsonify(
-            {
-                "success": True,
-                "message": "Flight created successfully.",
-                "plane": random_plane,
-                "id_vuelo": id_vuelo,
-            }
-        )
-    except Exception as ex:
-        return jsonify({"success": False, "message": str(ex)})
-
-
-@app.route("/api/booking/create", methods=["POST"])
+# Create a new reservation (with flight, hotel and car, if applicable)
+@app.route("/api/bookings/create", methods=["POST"])
 def create_reservation():
     try:
         import random
@@ -927,7 +573,280 @@ def create_reservation():
         return jsonify({"success": False, "message": str(ex)})
 
 
-@app.route("/api/flight/booking/add", methods=["POST"])
+##############################
+########## FLIGHTS  ##########
+##############################
+
+
+# Obtain flights associated to a reservation
+@app.route("/api/flights/booking/<booking_code>", methods=["GET"])
+def fetch_flights(booking_code):
+    try:
+        cursor = conexion.connection.cursor()
+        sql = """SELECT RA.ID_VUELO, RA.ID_RESERVA, RA.NUMERO_BILLETE, RA.NUMERO_ASIENTO, A.MODELO_AVION, T.ID_TRAYECTO, T.ORIGEN, T.DESTINO
+            FROM RESERVAS_AVION RA 
+            JOIN VUELOS V ON RA.ID_VUELO = V.ID_VUELO
+            JOIN AVIONES A ON V.MATRICULA_AVION = A.MATRICULA_AVION
+            JOIN TRAYECTOS T ON V.ID_TRAYECTO = T.ID_TRAYECTO
+            WHERE RA.ID_RESERVA = %s"""
+        cursor.execute(sql, (booking_code,))
+        flights = cursor.fetchall()
+
+        if flights:
+            return jsonify(
+                {
+                    "flights": [
+                        {
+                            "id_vuelo": flight[0],
+                            "id_reserva": flight[1],
+                            "numero_billete": flight[2],
+                            "numero_asiento": flight[3],
+                            "modelo_avion": flight[4],
+                            "id_trayecto": flight[5],
+                            "origen": flight[6],
+                            "destino": flight[7],
+                        }
+                        for flight in flights
+                    ],
+                    "message": "Flights found",
+                    "success": True,
+                }
+            )
+        else:
+            return jsonify(
+                {"message": "No flights found for this booking", "success": False}
+            )
+    except Exception as ex:
+        return jsonify(
+            {"message": "Error fetching flights", "success": False, "error": str(ex)}
+        )
+
+
+# Find airport codes in a 200km radius of a city
+@app.route("/api/flights/route", methods=["GET"])
+def fetch_flights_by_cities():
+    try:
+        # Get query parameters for origin and destination cities
+        origin_city = request.args.get("origin")
+        destination_city = request.args.get("destination")
+
+        if not origin_city or not destination_city:
+            return jsonify(
+                {
+                    "message": "Both origin and destination cities are required.",
+                    "success": False,
+                }
+            ), 400
+
+        # Find airports near the origin city
+        origin_airports, origin_error = find_airports_in_radius(origin_city, 500)
+        if origin_error:
+            return jsonify({"message": origin_error, "success": False})
+
+        # Find airports near the destination city
+        destination_airports, destination_error = find_airports_in_radius(
+            destination_city, 500
+        )
+        if destination_error:
+            return jsonify({"message": destination_error, "success": False})
+
+        # Extract airport codes
+        origin_codes = [airport["code"] for airport in origin_airports]
+        destination_codes = [airport["code"] for airport in destination_airports]
+
+        if not origin_codes or not destination_codes:
+            return jsonify(
+                {"message": "No airports found for the given cities.", "success": False}
+            ), 404
+
+        cursor = conexion.connection.cursor()
+
+        # Dynamically create placeholders for origin and destination
+        origin_placeholders = ", ".join(["%s"] * len(origin_codes))
+        destination_placeholders = ", ".join(["%s"] * len(destination_codes))
+
+        # SQL query to find flights between the origin and destination airports
+        sql = f"""
+            SELECT T.ID_TRAYECTO, T.ORIGEN, T.DESTINO, T.HORA_SALIDA, T.HORA_LLEGADA
+            FROM TRAYECTOS T
+            WHERE T.ORIGEN IN ({origin_placeholders}) AND T.DESTINO IN ({destination_placeholders})
+            ORDER BY T.DESTINO, T.HORA_SALIDA;
+        """
+
+        # Execute the query with both origin and destination airport codes
+        cursor.execute(sql, tuple(origin_codes + destination_codes))
+        flights = cursor.fetchall()
+
+        if flights:
+            return jsonify(
+                {
+                    "flights": [
+                        {
+                            "id_trayecto": flight[0],
+                            "origen": flight[1],
+                            "destino": flight[2],
+                            "hora_salida": format_timedelta(flight[3]),
+                            "hora_llegada": format_timedelta(flight[4]),
+                        }
+                        for flight in flights
+                    ],
+                    "message": "Flights found",
+                    "success": True,
+                }
+            )
+        else:
+            return jsonify(
+                {
+                    "message": "No flights found between the specified cities.",
+                    "success": False,
+                }
+            )
+
+    except Exception as ex:
+        return jsonify(
+            {"message": "Error fetching flights", "success": False, "error": str(ex)}
+        )
+
+
+# Obtain between two ariports
+@app.route("/api/flights/between/<origen>/<destino>", methods=["GET"])
+def check_flight_between(origen, destino):
+    try:
+        cursor = conexion.connection.cursor()
+        # SQL query to find flights between the origin and destination airports
+        sql = """
+            SELECT T.ID_TRAYECTO, T.ORIGEN, T.DESTINO, T.HORA_SALIDA, T.HORA_LLEGADA
+            FROM TRAYECTOS T
+            WHERE T.ORIGEN = %s AND T.DESTINO = %s
+            ORDER BY T.DESTINO, T.HORA_SALIDA;
+        """
+
+        # Execute the query with both origin and destination airport codes
+        cursor.execute(sql, (origen, destino))
+        flights = cursor.fetchall()
+
+        if flights:
+            return jsonify(
+                {
+                    "flights": [
+                        {
+                            "id_trayecto": flight[0],
+                            "origen": flight[1],
+                            "destino": flight[2],
+                            "hora_salida": format_timedelta(flight[3]),
+                            "hora_llegada": format_timedelta(flight[4]),
+                        }
+                        for flight in flights
+                    ],
+                    "message": "Flights found",
+                    "success": True,
+                }
+            )
+        else:
+            return jsonify(
+                {
+                    "message": "No flights found between the specified cities.",
+                    "success": False,
+                }
+            )
+    except Exception as ex:
+        return jsonify({"success": False, "message": str(ex)})
+
+
+# Obtain flights following a route on a certain date
+@app.route("/api/flights/check/<id_trayecto>/<date>", methods=["GET"])
+def check_flight(id_trayecto, date):
+    try:
+        cursor = conexion.connection.cursor()
+        # Check if flight exists
+        sql_check = (
+            "SELECT ID_VUELO FROM VUELOS WHERE ID_TRAYECTO = %s AND FECHA_VUELO = %s"
+        )
+        cursor.execute(sql_check, (id_trayecto, date))
+        vuelo = cursor.fetchone()
+
+        if vuelo:
+            id_vuelo = vuelo[0]
+            # Fetch available seats
+            sql_seats = """ SELECT NUMERO_ASIENTO 
+                            FROM ASIENTOS 
+                            WHERE NUMERO_ASIENTO NOT IN (
+                                SELECT NUMERO_ASIENTO FROM RESERVAS_AVION WHERE ID_VUELO = %s)
+                        """
+            cursor.execute(sql_seats, (id_vuelo,))
+            seats = [row[0] for row in cursor.fetchall()]
+            return jsonify(
+                {"success": True, "id_vuelo": id_vuelo, "available_seats": seats}
+            )
+        else:
+            id_vuelo = None
+            # Fetch available seats
+            sql_seats = """ SELECT NUMERO_ASIENTO 
+                            FROM ASIENTOS
+                        """
+            cursor.execute(sql_seats)
+            seats = [row[0] for row in cursor.fetchall()]
+            return jsonify(
+                {
+                    "success": True,
+                    "id_vuelo": None,
+                    "available_seats": seats,
+                    "message": "Flight not found. Create a new one.",
+                }
+            )
+    except Exception as ex:
+        return jsonify({"success": False, "message": str(ex)})
+
+
+# Create a new flight
+@app.route("/api/flights/create", methods=["POST"])
+def create_flight():
+    try:
+        import random
+
+        data = request.json
+        id_trayecto = data["id_trayecto"]
+        date = data["date"]
+
+        # Assign a plane
+        cursor = conexion.connection.cursor()
+        sql_plane = "SELECT MATRICULA_AVION FROM AVIONES"
+        cursor.execute(sql_plane)
+        planes = cursor.fetchall()
+
+        if not planes:
+            return jsonify({"success": False, "message": "No planes available."}), 404
+
+        # Select a random plane
+        random_plane = choice(planes)[0]
+
+        # Generate a unique ID_VUELO
+        while True:
+            id_vuelo = random.randint(1, 99999)
+            sql_check_vuelo = "SELECT COUNT(*) FROM VUELOS WHERE ID_VUELO = %s"
+            cursor.execute(sql_check_vuelo, (id_vuelo,))
+            if cursor.fetchone()[0] == 0:
+                break
+
+        # Create new flight
+        sql_create = "INSERT INTO VUELOS (ID_VUELO, ID_TRAYECTO, FECHA_VUELO, MATRICULA_AVION) VALUES (%s, %s, %s, %s)"
+        cursor.execute(sql_create, (id_vuelo, id_trayecto, date, random_plane))
+        conexion.connection.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Flight created successfully.",
+                "plane": random_plane,
+                "id_vuelo": id_vuelo,
+            }
+        )
+    except Exception as ex:
+        return jsonify({"success": False, "message": str(ex)})
+
+
+# Add a flight to a certain, already existing reservation
+@app.route("/api/flights/booking/add", methods=["POST"])
 def add_flight():
     try:
         import random
@@ -988,6 +907,54 @@ def add_flight():
         return jsonify({"success": False, "message": str(ex)})
 
 
+##############################
+##########  HOTELS  ##########
+##############################
+
+
+# Obtain hotels associated to a reservation
+@app.route("/api/hotels/booking/<booking_code>", methods=["GET"])
+def fetch_hotels(booking_code):
+    try:
+        cursor = conexion.connection.cursor()
+        sql = """SELECT RH.ID_RESERVA, RH.ID_HOTEL, RH.NUMERO_HABITACION , H.NOMBRE_HOTEL, H.DIRECCION, H.CIUDAD, HA.TIPO_HABITACION
+            FROM RESERVAS_HOTEL RH
+            JOIN HOTELES H ON RH.ID_HOTEL = H.ID_HOTEL
+            JOIN HABITACIONES HA ON (RH.NUMERO_HABITACION = HA.NUMERO_HABITACION AND RH.ID_HOTEL = HA.ID_HOTEL)
+            WHERE RH.ID_RESERVA = %s"""
+        cursor.execute(sql, (booking_code,))
+        hotels = cursor.fetchall()
+
+        if hotels:
+            return jsonify(
+                {
+                    "hotels": [
+                        {
+                            "id_reserva": hotel[0],
+                            "id_hotel": hotel[1],
+                            "numero_habitacion": hotel[2],
+                            "nombre_hotel": hotel[3],
+                            "direccion": hotel[4],
+                            "ciudad": hotel[5],
+                            "tipo_habitacion": hotel[6],
+                        }
+                        for hotel in hotels
+                    ],
+                    "message": "Hotels found",
+                    "success": True,
+                }
+            )
+        else:
+            return jsonify(
+                {"message": "No hotels found for this booking", "success": False}
+            )
+    except Exception as ex:
+        return jsonify(
+            {"message": "Error fetching hotels", "success": False, "error": str(ex)}
+        )
+
+
+# Obtain all hotels in a city
 @app.route("/api/hotels/<city>", methods=["GET"])
 def get_hotels(city):
     try:
@@ -1010,6 +977,49 @@ def get_hotels(city):
         return jsonify({"success": False, "message": str(ex)})
 
 
+##############################
+##########   CARS   ##########
+##############################
+
+
+# Obtain cars associated to a reservation
+@app.route("/api/cars/booking/<booking_code>", methods=["GET"])
+def fetch_cars(booking_code):
+    try:
+        cursor = conexion.connection.cursor()
+        sql = """SELECT RC.ID_RESERVA, RC.MATRICULA_COCHE, C.MODELO_COCHE
+            FROM RESERVAS_COCHE RC
+            JOIN COCHES C ON RC.MATRICULA_COCHE = C.MATRICULA_COCHE
+            WHERE RC.ID_RESERVA = %s"""
+        cursor.execute(sql, (booking_code,))
+        cars = cursor.fetchall()
+
+        if cars:
+            return jsonify(
+                {
+                    "cars": [
+                        {
+                            "id_reserva": car[0],
+                            "matricula_coche": car[1],
+                            "modelo_coche": car[2],
+                        }
+                        for car in cars
+                    ],
+                    "message": "Cars found",
+                    "success": True,
+                }
+            )
+        else:
+            return jsonify(
+                {"message": "No cars found for this booking", "success": False}
+            )
+    except Exception as ex:
+        return jsonify(
+            {"message": "Error fetching cars", "success": False, "error": str(ex)}
+        )
+
+
+# Obtain all cars in a city
 @app.route("/api/cars/<city>", methods=["GET"])
 def get_cars(city):
     try:
@@ -1032,12 +1042,77 @@ def get_cars(city):
         return jsonify({"success": False, "message": str(ex)})
 
 
+##############################
+##########  TIERS   ##########
+##############################
+
+
+# Obtain all tiers available
+@app.route("/api/tiers", methods=["GET"])
+def fetch_tiers():
+    try:
+        cursor = conexion.connection.cursor()
+
+        # Create the SQL query with placeholders
+        sql = "SELECT TIER, DESCUENTO FROM TIERS ORDER BY DESCUENTO;"
+
+        # Execute the query with the airports as parameters
+        cursor.execute(sql)
+        tiers = cursor.fetchall()
+
+        if tiers:
+            return jsonify(
+                {
+                    "tiers": [
+                        {"tier": tier[0], "descuento": tier[1] * 100} for tier in tiers
+                    ],
+                    "message": "Tiers found",
+                    "success": True,
+                }
+            )
+        else:
+            return jsonify({"message": "No tiers found.", "success": False})
+
+    except Exception as ex:
+        return jsonify(
+            {"message": "Error fetching tiers", "success": False, "error": str(ex)}
+        )
+
+
+# Edit the discount on a certain tier
+@app.route("/api/tiers/edit", methods=["PUT"])
+def update_tier_discount():
+    try:
+        data = request.json
+        tier = data["tier"]
+        discount = f"{int(data['discount']) / 100}"
+
+        cursor = conexion.connection.cursor()
+        sql = "UPDATE TIERS SET DESCUENTO = %s WHERE TIER = %s"
+        cursor.execute(sql, (discount, tier))
+        conexion.connection.commit()
+
+        return jsonify(
+            {"message": "Tier discount updated successfully.", "success": True}
+        )
+    except Exception as ex:
+        return jsonify(
+            {
+                "message": "Error updating tier discount.",
+                "success": False,
+                "error": str(ex),
+            }
+        )
+
+
+##############################
+######## TOTAL PRICE #########
+##############################
+
+
+# Calculate the total price of a reservation
 @app.route("/api/calculate_price", methods=["POST"])
 def calculate_price():
-    """
-    Function to dynamically calculate the total price based on selected options.
-    Expects a JSON payload with booking details.
-    """
     try:
         data = request.json
         dni = data.get("DNI")
@@ -1092,7 +1167,6 @@ def calculate_price():
 
         # Combine all subqueries
         total_query = " + ".join(query_parts)
-        
 
         # Add tier discount calculation
         tier_discount_query = (
@@ -1119,5 +1193,92 @@ def calculate_price():
         return jsonify({"success": False, "message": str(ex)}), 400
 
 
+##############################
+##########  REPORTS ##########
+##############################
+
+
+@app.route("/api/reports/<report_type>", methods=["GET"])
+def generate_report(report_type):
+    try:
+        cursor = conexion.connection.cursor()
+
+        queries = {
+            "popular-routes": """
+                SELECT T.ORIGEN AS Origin, T.DESTINO AS Destination, COUNT(V.ID_VUELO) AS `Total Flights`,
+                AVG(T.PRECIO_TRAYECTO) AS `Average Price (€)`
+                FROM TRAYECTOS T
+                JOIN VUELOS V ON T.ID_TRAYECTO = V.ID_TRAYECTO
+                WHERE V.FECHA_VUELO BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND CURDATE()
+                GROUP BY T.ORIGEN, T.DESTINO
+                ORDER BY `Total Flights` DESC;
+            """,
+            "plane-models": """
+                SELECT TRAYECTOS.ID_TRAYECTO AS `Route ID`, TRAYECTOS.ORIGEN AS `Origin`, TRAYECTOS.DESTINO AS `Destination`,
+                COUNT(RESERVAS_AVION.NUMERO_BILLETE) AS `Total Tickets Sold`,
+                SUM(TRAYECTOS.PRECIO_TRAYECTO + ASIENTOS.PRECIO_EXTRA) AS `Total Revenue (€)`
+                FROM TRAYECTOS
+                JOIN VUELOS ON TRAYECTOS.ID_TRAYECTO = VUELOS.ID_TRAYECTO
+                JOIN RESERVAS_AVION ON VUELOS.ID_VUELO = RESERVAS_AVION.ID_VUELO
+                JOIN ASIENTOS ON RESERVAS_AVION.NUMERO_ASIENTO = ASIENTOS.NUMERO_ASIENTO
+                GROUP BY TRAYECTOS.ID_TRAYECTO, TRAYECTOS.ORIGEN, TRAYECTOS.DESTINO
+                HAVING `Total Revenue (€)` > 1000
+                ORDER BY `Total Revenue (€)` DESC;
+            """,
+            "high-reservation-clients": """
+                SELECT CLIENTES.TIER AS `Tier`, CLIENTES.DNI AS `DNI`, CLIENTES.NOMBRE AS `NAME`,
+                COUNT(RESERVAS.ID_RESERVA) AS `Number of Reservations`
+                FROM CLIENTES
+                JOIN RESERVAS ON CLIENTES.DNI = RESERVAS.DNI
+                WHERE RESERVAS.FECHA_INICIO >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+                GROUP BY CLIENTES.DNI, CLIENTES.TIER, CLIENTES.NOMBRE
+                HAVING `Number of Reservations` > 3
+                ORDER BY `Number of Reservations` DESC;
+            """,
+            "avg-plane-income": """
+                SELECT MODELOS_AVION.FABRICANTE AS `Manufacturer`, MODELOS_AVION.MODELO_AVION AS `Airplane Model`,
+                COALESCE(AVG(INGRESOS.INGRESOS_TOTALES), 0) AS `Average Revenue (€)`
+                FROM MODELOS_AVION
+                LEFT JOIN AVIONES ON MODELOS_AVION.MODELO_AVION = AVIONES.MODELO_AVION
+                LEFT JOIN VUELOS ON AVIONES.MATRICULA_AVION = VUELOS.MATRICULA_AVION
+                LEFT JOIN (
+                    SELECT RESERVAS_AVION.ID_VUELO,
+                    SUM(COALESCE(TRAYECTOS.PRECIO_TRAYECTO, 0) + COALESCE(ASIENTOS.PRECIO_EXTRA, 0)) AS INGRESOS_TOTALES
+                    FROM RESERVAS_AVION
+                    LEFT JOIN TRAYECTOS ON RESERVAS_AVION.ID_VUELO = TRAYECTOS.ID_TRAYECTO
+                    LEFT JOIN ASIENTOS ON RESERVAS_AVION.NUMERO_ASIENTO = ASIENTOS.NUMERO_ASIENTO
+                    GROUP BY RESERVAS_AVION.ID_VUELO
+                ) AS INGRESOS ON VUELOS.ID_VUELO = INGRESOS.ID_VUELO
+                GROUP BY MODELOS_AVION.FABRICANTE, MODELOS_AVION.MODELO_AVION
+                HAVING `Average Revenue (€)` >= 0;
+            """,
+        }
+
+        if report_type not in queries:
+            return jsonify({"success": False, "message": "Invalid report type."}), 400
+
+        cursor.execute(queries[report_type])
+        rows = cursor.fetchall()
+
+        columns = [col[0] for col in cursor.description]
+
+        # Use OrderedDict to maintain column order
+        report = [
+            OrderedDict(zip(columns, row)) for row in rows
+        ]
+
+        # Return JSON response using Flask's jsonify
+        return Response(json.dumps({"success": True, "report": report}, cls=CustomJSONEncoder),
+                        mimetype="application/json", status=200)
+
+    except Exception as ex:
+        return jsonify({"success": False, "message": str(ex)}), 500
+
+
+##############################
+##########   MAIN   ##########
+##############################
+
+# Start the REST-API and Flask Server
 if __name__ == "__main__":
     app.run(debug=True)

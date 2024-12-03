@@ -64,6 +64,7 @@
                         <tr>
                             <th>Booking ID</th>
                             <th>DNI</th>
+                            <th>Name</th>
                             <th>Start Date</th>
                             <th>End Date</th>
                         </tr>
@@ -84,9 +85,12 @@
                     <table id="flights-table" class="styled-table" style="display: none;">
                         <thead>
                             <tr>
-                                <th>Flight ID</th>
-                                <th>Booking ID</th>
                                 <th>Ticket Number</th>
+                                <th>Flight ID</th>
+                                <th>Route ID</th>
+                                <th>Origin</th>
+                                <th>Destination</th>
+                                <th>Airlane Model</th>
                                 <th>Seat Number</th>
                             </tr>
                         </thead>
@@ -103,9 +107,12 @@
                     <table id="hotels-table" class="styled-table" style="display: none;">
                         <thead>
                             <tr>
-                                <th>Booking ID</th>
                                 <th>Hotel ID</th>
+                                <th>Hotel Name</th>
+                                <th>Address</th>
+                                <th>City</th>
                                 <th>Room Number</th>
+                                <th>Room Type</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -121,8 +128,8 @@
                     <table id="cars-table" class="styled-table" style="display: none;">
                         <thead>
                             <tr>
-                                <th>Booking ID</th>
                                 <th>License Plate</th>
+                                <th>Car Model</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -213,6 +220,28 @@
                 </div>
             </div>
 
+            <div id="reports-section" class="section">
+                <h2>Reports</h2>
+                <form id="reports-form" onsubmit="fetchReport(event)">
+                    <label for="report-type">Select Report Type:</label>
+                    <select id="report-type" name="report-type" required>
+                        <option value="popular-routes">Popular Routes</option>
+                        <option value="plane-models">Revenue by Plane Models</option>
+                        <option value="high-reservation-clients">Clients with High Reservations</option>
+                        <option value="avg-plane-income">Average Revenue by Plane Models</option>
+                    </select>
+                    <button type="submit">Generate Report</button>
+                </form>
+                <table id="report-table" class="styled-table" style="display: none;">
+                    <thead>
+                        <!-- Headers will be populated dynamically -->
+                    </thead>
+                    <tbody>
+                        <!-- Report data will be populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            
         </main>
     </div>
     

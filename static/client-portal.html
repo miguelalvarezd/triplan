@@ -80,11 +80,10 @@
                 <table id="summary-table" class="styled-table">
                     <thead>
                         <tr>
-                            <th style="width: 19%;">Booking ID</th>
-                            <th style="width: 19%;">DNI</th>
-                            <th style="width: 19%;">Start Date</th>
-                            <th style="width: 19%;">End Date</th>
-                            <th style="width: 24%;">Actions</th>
+                            <th>Booking ID</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -108,9 +107,12 @@
                             <table id="details-flights-table" class="styled-table" style="display: none;">
                                 <thead>
                                     <tr>
-                                        <th>Flight ID</th>
-                                        <th>Booking ID</th>
                                         <th>Ticket Number</th>
+                                        <th>Flight ID</th>
+                                        <th>Route ID</th>
+                                        <th>Origin</th>
+                                        <th>Destination</th>
+                                        <th>Airlane Model</th>
                                         <th>Seat Number</th>
                                     </tr>
                                 </thead>
@@ -123,9 +125,12 @@
                             <table id="details-hotels-table" class="styled-table" style="display: none;">
                                 <thead>
                                     <tr>
-                                        <th>Booking ID</th>
                                         <th>Hotel ID</th>
+                                        <th>Hotel Name</th>
+                                        <th>Address</th>
+                                        <th>City</th>
                                         <th>Room Number</th>
+                                        <th>Room Type</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
@@ -137,13 +142,17 @@
                             <table id="details-cars-table" class="styled-table" style="display: none;">
                                 <thead>
                                     <tr>
-                                        <th>Booking ID</th>
                                         <th>License Plate</th>
+                                        <th>Car Model</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
                             </table>
                             <div id="no-cars-message" style="display: none; text-align: center; padding: 1rem;">No cars found for this booking.</div>
+                        </div>
+
+                        <div id="total-price-container-reservation">
+                            <h3>Total Price: <span id="total-price-reservation">0.00€</span></h3>
                         </div>
                     </section>
                 </div>

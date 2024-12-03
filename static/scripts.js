@@ -9,6 +9,10 @@ let selectedReturnFlightID = null;
 let currentFlightID = null;
 let currentTotalPrice = null;
 
+let selectedSeatNumber = null;
+let selectedReturnSeatNumber = null;
+let selectedRoomNumber = null;
+
 const bookFlightModal = document.getElementById('bookFlightModal');
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -251,7 +255,6 @@ async function populateBookingSummary() {
 
                 row.innerHTML = `
                     <td>${booking.id}</td>
-                    <td>${booking.dni}</td>
                     <td>${startDate}</td>
                     <td>${endDate}</td>
                     <td style='text-align: center;'>
@@ -329,10 +332,12 @@ window.closeCancelBookingModal = () => {
 };
 
 // Open Booking Details Modal
-function openBookingDetailsModal(bookingID) {
+async function openBookingDetailsModal(bookingID) {
     document.getElementById('details-booking-id').textContent = bookingID;
+    
+    await fetchBookingDetails(bookingID);
+    updateTotalPrice(1);
     document.getElementById('bookingDetailsModal').style.display = 'block';
-    fetchBookingDetails(bookingID);
 }
 
 // Close Booking Details Modal
@@ -353,6 +358,14 @@ function closeBookingDetailsModal() {
         table.style.display = 'none'; // Hide table
         message.style.display = 'none'; // Hide "No data" message
     }
+
+    currentRouteID = null;
+    selectedSeatNumber = null;
+    selectedReturnRouteID = null;
+    selectedReturnSeatNumber = null;
+    selectedCarID = null;
+    selectedHotelID = null;
+    selectedRoomNumber = null;
 
     // Hide the modal
     document.getElementById('bookingDetailsModal').style.display = 'none';
@@ -390,24 +403,48 @@ async function fetchBookingDetails(bookingID) {
 
             if (data.success && data[key] && data[key].length > 0) {
                 tableBody.innerHTML = data[key]
-                    .map(item => {
+                    .map((item, index) => {
                         if (key === 'flights') {
+                            // Assign values for the first flight
+                            if (index === 0) {
+                                currentRouteID = item.id_trayecto || null;
+                                selectedSeatNumber = item.numero_asiento || null;
+                            }
+                            // Assign values for the return flight (if it exists)
+                            if (index === 1) {
+                                selectedReturnRouteID = item.id_trayecto || null;
+                                selectedReturnSeatNumber = item.numero_asiento || null;
+                            }
+            
                             return `<tr>
-                                <td>${item.id_vuelo}</td>
-                                <td>${item.id_reserva}</td>
                                 <td>${item.numero_billete}</td>
+                                <td>${item.id_vuelo}</td>
+                                <td>${item.id_trayecto || 'N/A'}</td>
+                                <td>${item.origen || 'N/A'}</td>
+                                <td>${item.destino || 'N/A'}</td>
+                                <td>${item.modelo_avion || 'N/A'}</td>
                                 <td>${item.numero_asiento || 'N/A'}</td>
                             </tr>`;
                         } else if (key === 'hotels') {
+                            // Assign hotel data
+                            selectedHotelID = item.id_hotel || null;
+                            selectedRoomNumber = item.numero_habitacion || null;
+            
                             return `<tr>
-                                <td>${item.id_reserva}</td>
                                 <td>${item.id_hotel}</td>
+                                <td>${item.nombre_hotel || 'N/A'}</td>
+                                <td>${item.direccion || 'N/A'}</td>
+                                <td>${item.ciudad || 'N/A'}</td>
                                 <td>${item.numero_habitacion || 'N/A'}</td>
+                                <td>${item.tipo_habitacion || 'N/A'}</td>
                             </tr>`;
                         } else if (key === 'cars') {
+                            // Assign car data
+                            selectedCarID = item.matricula_coche || null;
+            
                             return `<tr>
-                                <td>${item.id_reserva}</td>
                                 <td>${item.matricula_coche}</td>
+                                <td>${item.modelo_coche}</td>
                             </tr>`;
                         }
                     })
@@ -417,6 +454,7 @@ async function fetchBookingDetails(bookingID) {
                 message.style.display = 'block'; // Show "No data" message
             }
         });
+
     } catch (error) {
         console.error('Error fetching booking details:', error);
         for (const key in sections) {
@@ -471,30 +509,6 @@ document.getElementById('returning-customer-form').addEventListener('submit', as
     }
 });
 
-document.getElementById('booking-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const bookingDetails = {
-        origin: document.getElementById('origin').value,
-        destination: document.getElementById('destination').value,
-        flightDate: document.getElementById('flight-date').value,
-        seatClass: document.getElementById('seat-class').value,
-        seatNumber: document.getElementById('seat-number').value,
-        hotel: document.getElementById('hotel').value,
-        roomType: document.getElementById('room-type').value,
-        carModel: document.getElementById('car-model').value,
-        seats: document.getElementById('seats').value
-    };
-
-    const response = await fetch('http://localhost:5000/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bookingDetails)
-    });
-
-    const data = await response.json();
-    alert(data.message);
-});
-
 function manageBookings(event) {
     event.preventDefault();
 
@@ -522,12 +536,17 @@ function manageBookings(event) {
         .then(data => {
             if (data.success && data.booking) {
                 const booking = data.booking;
+
+                const startDate = booking.start_date ? new Date(booking.start_date).toLocaleDateString() : 'N/A';
+                const endDate = booking.end_date ? new Date(booking.end_date).toLocaleDateString() : 'N/A';
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                 <td>${booking.id}</td>
                 <td>${booking.dni}</td>
-                <td>${booking.start_date || 'N/A'}</td>
-                <td>${booking.end_date || 'N/A'}</td>
+                <td>${booking.name}</td>
+                <td>${startDate || 'N/A'}</td>
+                <td>${endDate || 'N/A'}</td>
             `;
                 tableBody.appendChild(row);
 
@@ -587,21 +606,27 @@ function manageBookings(event) {
                     tbody.innerHTML = data[key].map(item => {
                         if (key === 'flights') {
                             return `<tr>
-                            <td>${item.id_vuelo}</td>
-                            <td>${item.id_reserva}</td>
                             <td>${item.numero_billete}</td>
+                            <td>${item.id_vuelo}</td>
+                            <td>${item.id_trayecto || 'N/A'}</td>
+                            <td>${item.origen || 'N/A'}</td>
+                            <td>${item.destino || 'N/A'}</td>
+                            <td>${item.modelo_avion || 'N/A'}</td>
                             <td>${item.numero_asiento || 'N/A'}</td>
                         </tr>`;
                         } else if (key === 'hotels') {
                             return `<tr>
-                            <td>${item.id_reserva}</td>
                             <td>${item.id_hotel}</td>
+                            <td>${item.nombre_hotel || 'N/A'}</td>                        
+                            <td>${item.direccion || 'N/A'}</td>
+                            <td>${item.ciudad || 'N/A'}</td>
                             <td>${item.numero_habitacion || 'N/A'}</td>
+                            <td>${item.tipo_habitacion || 'N/A'}</td>
                         </tr>`;
                         } else if (key === 'cars') {
                             return `<tr>
-                            <td>${item.id_reserva}</td>
                             <td>${item.matricula_coche}</td>
+                            <td>${item.modelo_coche}</td>
                         </tr>`;
                         }
                     }).join('');
@@ -893,7 +918,7 @@ function toggleReturnFlight() {
         document.getElementById('seat-selection-return').style.display = 'none';
         selectedReturnRouteID = null;
     }
-    updateTotalPrice();
+    updateTotalPrice(0);
 }
 
 function selectReturnFlight(routeID, origin, destination, departure, arrival) {
@@ -920,7 +945,7 @@ function selectReturnFlight(routeID, origin, destination, departure, arrival) {
     selectedReturnRouteID = routeID;
     populateSeats(departureDate, 1);
     document.getElementById('seat-selection-return').style.display = 'block';
-    updateTotalPrice();
+    updateTotalPrice(0);
 }
 
 function cancelReturnFlight(event) {
@@ -938,7 +963,7 @@ function cancelReturnFlight(event) {
     handleReturnDate(); // Reload available flights
 
     selectedReturnRouteID = null;
-    updateTotalPrice();
+    updateTotalPrice(0);
 }
 
 // Open confirmation modal
@@ -1057,7 +1082,7 @@ async function submitBooking() {
 
     // Submit booking
     try {
-        const response = await fetch('http://localhost:5000/api/booking/create', {
+        const response = await fetch('http://localhost:5000/api/bookings/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1087,7 +1112,7 @@ async function submitBooking() {
     // Add return flight to the booking
     if (selectedReturnRouteID != null) {
         try {
-            const response = await fetch('http://localhost:5000/api/flight/booking/add', {
+            const response = await fetch('http://localhost:5000/api/flights/booking/add', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1240,7 +1265,7 @@ function selectHotel(hotelID, hotelName, city, price) {
 
     // Store the selected hotel ID
     selectedHotelID = hotelID;
-    updateTotalPrice();
+    updateTotalPrice(0);
 }
 
 function toggleHotelTable() {
@@ -1256,7 +1281,7 @@ function toggleHotelTable() {
         selectedHotelID = null;
         hotelHeader.textContent = 'Available Hotels';
     }
-    updateTotalPrice();
+    updateTotalPrice(0);
 }
 
 function cancelHotel(event) {
@@ -1272,7 +1297,7 @@ function cancelHotel(event) {
 
     toggleHotelTable(); // Reload available hotels
     selectedHotelID = null;
-    updateTotalPrice();
+    updateTotalPrice(0);
 }
 
 function selectCar(carID, carModel, city, price) {
@@ -1294,7 +1319,7 @@ function selectCar(carID, carModel, city, price) {
         </tr>
     `;
     selectedCarID = carID;
-    updateTotalPrice();
+    updateTotalPrice(0);
 }
 
 function toggleCarTable() {
@@ -1310,7 +1335,7 @@ function toggleCarTable() {
         selectedCarID = null;
         carHeader.textContent = 'Available Cars';
     }
-    updateTotalPrice();
+    updateTotalPrice(0);
 }
 
 function cancelCar(event) {
@@ -1327,23 +1352,32 @@ function cancelCar(event) {
     toggleCarTable(); // Reload available cars
 
     selectedCarID = null;
-    updateTotalPrice();
+    updateTotalPrice(0);
 }
 
-async function updateTotalPrice() {
+async function updateTotalPrice(mode) {
     const dni = localStorage.getItem('customerDNI');
     const id_trayecto = currentRouteID;
-    const numero_asiento = document.getElementById('seat-number').value;
+    let numero_asiento = null;
     let id_hotel = null;
     let matricula_coche = null;
     let id_trayecto_vuelta = null;
     let numero_asiento_vuelta = null;
 
+    if(mode == 0){
+        numero_asiento = document.getElementById('seat-number').value;
 
-    if (selectedReturnFlightID){
+        if (selectedReturnFlightID){
+            id_trayecto_vuelta = selectedReturnRouteID;
+            numero_asiento_vuelta = document.getElementById('seat-number-return').value;
+        }
+    }else if(mode == 1){
+        numero_asiento = selectedSeatNumber
         id_trayecto_vuelta = selectedReturnRouteID;
-        numero_asiento_vuelta = document.getElementById('seat-number-return').value;
+        numero_asiento_vuelta = selectedReturnSeatNumber;
     }
+
+    
     if (selectedHotelID) id_hotel = selectedHotelID;
     if (selectedCarID) matricula_coche = selectedCarID;
 
@@ -1365,7 +1399,11 @@ async function updateTotalPrice() {
     const data = await response.json();
     if (data.success) {
         currentTotalPrice = data.totalPrice;
-        document.getElementById('total-price').textContent = `${data.totalPrice}€`;
+        if (mode == 0){
+            document.getElementById('total-price').textContent = `${data.totalPrice}€`;
+        }else if (mode == 1){
+            document.getElementById('total-price-reservation').textContent = `${data.totalPrice}€`;
+        }
     } else {
         console.error('Failed to calculate price:', data.message);
     }
@@ -1479,6 +1517,41 @@ async function saveTier(event) {
     }
 }
 
+async function fetchReport(event) {
+    event.preventDefault();
+    const reportType = document.getElementById('report-type').value;
+    const reportTable = document.getElementById('report-table');
+    const tableHead = reportTable.querySelector('thead');
+    const tableBody = reportTable.querySelector('tbody');
+
+    tableHead.innerHTML = '';
+    tableBody.innerHTML = '';
+    reportTable.style.display = 'none';
+
+    try {
+        const response = await fetch(`http://localhost:5000/api/reports/${reportType}`);
+        const data = await response.json();
+
+        if (data.success && data.report && data.report.length > 0) {
+            // Populate table headers
+            const headers = Object.keys(data.report[0]);
+            tableHead.innerHTML = `<tr>${headers.map(header => `<th>${header}</th>`).join('')}</tr>`;
+
+            // Populate table rows
+            data.report.forEach(row => {
+                const rowHTML = `<tr>${headers.map(header => `<td>${row[header]}</td>`).join('')}</tr>`;
+                tableBody.innerHTML += rowHTML;
+            });
+
+            reportTable.style.display = 'table';
+        } else {
+            alert('No data available for the selected report.');
+        }
+    } catch (error) {
+        console.error('Error fetching report:', error);
+        alert('Failed to load the report. Please try again later.');
+    }
+}
 
 
 
