@@ -7,7 +7,6 @@ from random import choice
 import io
 import matplotlib.pyplot as plt
 from decimal import Decimal
-
 from collections import OrderedDict
 import json
 
@@ -23,7 +22,7 @@ app.config["MYSQL_DB"] = "DB_TRIPLAN"
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Decimal):
-            return round(float(obj), 2)  # Convert Decimal to float
+            return round(float(obj), 2)
         return super().default(obj)
     
 app.json_encoder = CustomJSONEncoder
@@ -38,13 +37,12 @@ def serve_index():
 
 
 ##############################
-##########   PLOT   ##########
+#### TEST SENDING PLOTS ######
 ##############################
 
-
+# To test sending a dummy plot.
 @app.route("/api/plot", methods=["GET"])
 def generate_plot():
-    # Create the plot
     plt.figure(figsize=(6, 4))
     plt.plot([1, 2, 3, 4], [10, 20, 25, 30], label="Example Line")
     plt.title("Sample Plot")
@@ -53,13 +51,11 @@ def generate_plot():
     plt.legend()
     plt.grid()
 
-    # Save the plot to a BytesIO buffer
     buffer = io.BytesIO()
     plt.savefig(buffer, format="png")
     buffer.seek(0)
-    plt.close()  # Close the plot to free memory
+    plt.close()  
 
-    # Return the buffer as a response
     return send_file(buffer, mimetype="image/png")
 
 
@@ -167,7 +163,6 @@ def delete_customer(dni):
         cursor.execute(sql, (dni,))
         conexion.connection.commit()
 
-        # Check if a client was deleted
         if cursor.rowcount == 0:
             return jsonify(
                 {"message": "No client found with the provided DNI.", "success": False}
@@ -386,20 +381,20 @@ def create_reservation():
         # Handle hotel reservation
         if id_hotel is not None:
             while True:
-                # Generate a random room number
-                numero_habitacion = random.randint(
-                    1, 100
-                )  # Use appropriate range based on hotel capacity
-
-                # Check if the room number is within the hotel's NUMERO_HABITACIONES
+                # First get the hotel's NUMERO_HABITACIONES
                 sql_check_capacity = (
                     "SELECT HABITACIONES_TOTALES FROM HOTELES WHERE ID_HOTEL = %s"
                 )
                 cursor.execute(sql_check_capacity, (id_hotel,))
-                max_rooms = cursor.fetchone()
+                max_rooms_tuple = cursor.fetchone()
 
-                if not max_rooms or numero_habitacion > max_rooms[0]:
-                    continue  # Retry with a new room number if out of range
+                max_rooms = max_rooms_tuple[0] if max_rooms_tuple else 0  # Handle None case
+
+                # Generate a random room number
+                numero_habitacion = random.randint(1, int(max_rooms))
+
+                if not max_rooms:
+                    continue
 
                 # Check if the room is already reserved
                 sql_check_reservas = """
@@ -420,8 +415,8 @@ def create_reservation():
                     (
                         id_hotel,
                         numero_habitacion,
-                        fecha_inicio,  # Your reservation start date
-                        fecha_final,  # Your reservation end date
+                        fecha_inicio,
+                        fecha_final,
                         fecha_inicio,
                         fecha_final,
                         fecha_inicio,
@@ -431,7 +426,7 @@ def create_reservation():
                 overlap_count = cursor.fetchone()[0]
 
                 if overlap_count > 0:
-                    continue  # Retry if the room is already reserved
+                    continue
 
                 # Check if the room exists in the HABITACIONES table
                 sql_check_habitacion = "SELECT COUNT(*) FROM HABITACIONES WHERE ID_HOTEL = %s AND NUMERO_HABITACION = %s"
@@ -441,14 +436,20 @@ def create_reservation():
                     # Generate random values for new room attributes
                     precio_extra = random.randint(
                         50, 200
-                    )  # Replace with appropriate range
-                    tipos_disponibles = [
-                        "DOUBLE",
-                        "SUITE",
-                        "SINGLE",
-                        "DELUXE",
-                        "FAMILY",
-                    ]  # Adjust available types as necessary
+                    )
+
+                    sql_room_type = "SELECT DISTINCT TIPO_HABITACION FROM HABITACIONES;"
+                    cursor.execute(sql_room_type)
+
+                    tipos_disponibles = [row[0] for row in cursor.fetchall()]
+
+                    # tipos_disponibles = [
+                    #     "DOUBLE",
+                    #     "SUITE",
+                    #     "SINGLE",
+                    #     "DELUXE",
+                    #     "FAMILY",
+                    # ]  # Adjust available types as necessary
                     tipo_habitacion = random.choice(tipos_disponibles)
 
                     # Insert new room into HABITACIONES
@@ -596,7 +597,6 @@ def fetch_flights(booking_code):
 @app.route("/api/flights/route", methods=["GET"])
 def fetch_flights_by_cities():
     try:
-        # Get query parameters for origin and destination cities
         origin_city = request.args.get("origin")
         destination_city = request.args.get("destination")
 
@@ -631,11 +631,9 @@ def fetch_flights_by_cities():
 
         cursor = conexion.connection.cursor()
 
-        # Dynamically create placeholders for origin and destination
         origin_placeholders = ", ".join(["%s"] * len(origin_codes))
         destination_placeholders = ", ".join(["%s"] * len(destination_codes))
 
-        # SQL query to find flights between the origin and destination airports
         sql = f"""
             SELECT T.ID_TRAYECTO, T.ORIGEN, T.DESTINO, T.HORA_SALIDA, T.HORA_LLEGADA
             FROM TRAYECTOS T
@@ -643,7 +641,6 @@ def fetch_flights_by_cities():
             ORDER BY T.DESTINO, T.HORA_SALIDA;
         """
 
-        # Execute the query with both origin and destination airport codes
         cursor.execute(sql, tuple(origin_codes + destination_codes))
         flights = cursor.fetchall()
 
@@ -683,15 +680,13 @@ def fetch_flights_by_cities():
 def check_flight_between(origen, destino):
     try:
         cursor = conexion.connection.cursor()
-        # SQL query to find flights between the origin and destination airports
+
         sql = """
             SELECT T.ID_TRAYECTO, T.ORIGEN, T.DESTINO, T.HORA_SALIDA, T.HORA_LLEGADA
             FROM TRAYECTOS T
             WHERE T.ORIGEN = %s AND T.DESTINO = %s
             ORDER BY T.DESTINO, T.HORA_SALIDA;
         """
-
-        # Execute the query with both origin and destination airport codes
         cursor.execute(sql, (origen, destino))
         flights = cursor.fetchall()
 
@@ -728,7 +723,7 @@ def check_flight_between(origen, destino):
 def check_flight(id_trayecto, date):
     try:
         cursor = conexion.connection.cursor()
-        # Check if flight exists
+
         sql_check = (
             "SELECT ID_VUELO FROM VUELOS WHERE ID_TRAYECTO = %s AND FECHA_VUELO = %s"
         )
@@ -737,7 +732,7 @@ def check_flight(id_trayecto, date):
 
         if vuelo:
             id_vuelo = vuelo[0]
-            # Fetch available seats
+
             sql_seats = """ SELECT NUMERO_ASIENTO 
                             FROM ASIENTOS 
                             WHERE NUMERO_ASIENTO NOT IN (
@@ -750,7 +745,7 @@ def check_flight(id_trayecto, date):
             )
         else:
             id_vuelo = None
-            # Fetch available seats
+
             sql_seats = """ SELECT NUMERO_ASIENTO 
                             FROM ASIENTOS
                         """
@@ -778,7 +773,6 @@ def create_flight():
         id_trayecto = data["id_trayecto"]
         date = data["date"]
 
-        # Assign a plane
         cursor = conexion.connection.cursor()
         sql_plane = "SELECT MATRICULA_AVION FROM AVIONES"
         cursor.execute(sql_plane)
@@ -1023,10 +1017,8 @@ def fetch_tiers():
     try:
         cursor = conexion.connection.cursor()
 
-        # Create the SQL query with placeholders
         sql = "SELECT TIER, DESCUENTO FROM TIERS ORDER BY DESCUENTO;"
 
-        # Execute the query with the airports as parameters
         cursor.execute(sql)
         tiers = cursor.fetchall()
 
@@ -1095,7 +1087,6 @@ def calculate_price():
 
         cursor = conexion.connection.cursor()
 
-        # Dynamically build the query to calculate the total price
         query_parts = []
         params = []
 
@@ -1135,10 +1126,8 @@ def calculate_price():
             )
             params.append(matricula_coche)
 
-        # Combine all subqueries
         total_query = " + ".join(query_parts)
 
-        # Add tier discount calculation
         tier_discount_query = (
             "SELECT (%s) * (1 - TI.DESCUENTO) AS TOTAL_PRICE "
             "FROM CLIENTES CL "
@@ -1148,7 +1137,6 @@ def calculate_price():
         final_query = tier_discount_query % (total_query, "%s")
         params.append(dni)
 
-        # Execute the query
         cursor.execute(final_query, params)
         result = cursor.fetchone()
 
@@ -1232,12 +1220,10 @@ def generate_report(report_type):
 
         columns = [col[0] for col in cursor.description]
 
-        # Use OrderedDict to maintain column order
         report = [
-            OrderedDict(zip(columns, row)) for row in rows
+            OrderedDict(zip(columns, row)) for row in rows      # To maintain ordered columns
         ]
 
-        # Return JSON response using Flask's jsonify
         return Response(json.dumps({"success": True, "report": report}, cls=CustomJSONEncoder),
                         mimetype="application/json", status=200)
 
