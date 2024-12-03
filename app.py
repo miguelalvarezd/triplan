@@ -207,35 +207,6 @@ def update_tier_client():
 ##############################
 
 
-# Create a booking
-# @app.route("/api/bookings", methods=["POST"])
-# def create_booking():
-#     try:
-#         data = request.json
-#         dni = data["dni"]
-#         flight_id = data.get("flight_id")
-#         hotel_id = data.get("hotel_id")
-#         car_id = data.get("car_id")
-
-#         cursor = conexion.connection.cursor()
-#         sql = "INSERT INTO RESERVAS (DNI, ID_VUELO, ID_HOTEL, ID_COCHE) VALUES (%s, %s, %s, %s)"
-#         cursor.execute(sql, (dni, flight_id, hotel_id, car_id))
-#         conexion.connection.commit()
-
-#         booking_id = cursor.lastrowid
-#         return jsonify(
-#             {
-#                 "message": "Booking created successfully",
-#                 "bookingId": booking_id,
-#                 "success": True,
-#             }
-#         )
-#     except Exception as ex:
-#         return jsonify(
-#             {"message": "Error creating booking", "success": False, "error": str(ex)}
-#         )
-
-
 # Get a single booking by its booking code
 @app.route("/api/bookings/code/<booking_code>", methods=["GET"])
 def get_booking(booking_code):
@@ -335,7 +306,6 @@ def cancel_booking(booking_id):
         cursor.execute(sql, (booking_id,))
         conexion.connection.commit()
 
-        # Check if a booking was deleted
         if cursor.rowcount == 0:
             return jsonify(
                 {"message": "No booking found with the provided ID.", "success": False}

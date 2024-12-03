@@ -1663,7 +1663,7 @@ function handleNewClient(event) {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred during login. Please try again.');
+            alert('An error occurred during registration. Please try again.');
         });
 }
 
