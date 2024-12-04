@@ -60,6 +60,17 @@ def report_airports(city_name):
             "nearest_airports": result
         }
         return (json.dumps(output, indent=4))
+    
+def get_airport_details(code):
+    """Retrieve airport details using airportsdata."""
+    airport = airports.get(code)
+    if airport:
+        return {
+            "name": airport["name"],
+            "lat": airport["lat"],
+            "lon": airport["lon"]
+        }
+    return None
 
 if __name__ == '__main__':
     city_name = "London"

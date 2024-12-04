@@ -18,7 +18,7 @@
     </div> -->
 
     <div class="portal-user">
-        <h2 class="triplan">Triplan Booking System </h2>
+        <h2 class="triplan">Triplan Agent Portal</h2>
         <div>
             <!-- <button class="client-info-btn" onclick="openAgentInfoModal()">Show Your Agent Info</button> -->
             <button class="logout-btn" onclick="logout()">Exit Agent Portal</button>
@@ -220,7 +220,7 @@
                 </div>
             </div>
 
-            <div id="reports-section" class="section">
+            <!-- <div id="reports-section" class="section">
                 <h2>Reports</h2>
                 <form id="reports-form" onsubmit="fetchReport(event)">
                     <label for="report-type">Select Report Type:</label>
@@ -234,12 +234,51 @@
                 </form>
                 <table id="report-table" class="styled-table" style="display: none;">
                     <thead>
-                        <!-- Headers will be populated dynamically -->
+                        <!-- Headers will be populated dynamically 
                     </thead>
                     <tbody>
-                        <!-- Report data will be populated dynamically -->
+                        <!-- Report data will be populated dynamically 
                     </tbody>
                 </table>
+            </div> -->
+
+            <div id="reports-section" class="section">
+                <h2>Reports</h2>
+                <div class="tabs">
+                    <button class="tab-button" onclick="showTab('tables')">Tables</button>
+                    <button class="tab-button" onclick="showTab('graphs')">Graphs</button>
+                </div>
+                <div id="tables-tab" class="tab-content">
+                    <form id="reports-form" onsubmit="fetchReport(event)">
+                        <label for="report-type">Select Report Type:</label>
+                        <select id="report-type" name="report-type" onchange="cleanTables()" required>
+                            <option value="popular-routes">Popular Routes</option>
+                            <option value="plane-models">Routes with Highest Revenue</option>
+                            <option value="high-reservation-clients">Clients with Highest Reservations</option>
+                            <option value="avg-plane-income">Average Revenue by Plane Models</option>
+                        </select>
+                        <button type="submit">Generate Report</button>
+                    </form>
+                    <table id="report-table" class="styled-table" style="display: none;">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="graphs-tab" class="tab-content">
+                    <form id="graphs-form" onsubmit="fetchGraph(event)">
+                        <label for="graph-type">Select Graph Type:</label>
+                        <select id="graph-type" name="graph-type" onchange="cleanGraph()" required>
+                            <option value="flights-by-model">Number of Flights by Plane Model</option>
+                            <option value="revenue-by-route">Total Revenue by Route</option>
+                            <option value="reservations-by-tier">Number of Reservations by Client Tier</option>
+                            <option value="reservations-by-origin">Number of Reservations by Origin City</option>
+                            <option value="average-hotel-price">Average Price per Night in Hotels by City</option>
+                            <option value="cars-by-airport">Number of Available Cars by Airport</option>
+                        </select>
+                        <button type="submit">Generate Graph</button>
+                    </form>
+                    <div id="graph-container" style="text-align: center; margin-top: 20px; display: none;"></div>
+                </div>                
             </div>
             
         </main>

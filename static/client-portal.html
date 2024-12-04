@@ -287,12 +287,25 @@
                                        
                 </div>
             </div>
-            
-            
+
+            <!-- Modal structure -->
+            <div id="mapModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeMapModal()">&times;</span>
+                    <h2>Flight Routes Map</h2>
+                    <div id="mapContainer">
+                        <!-- Map content will be dynamically loaded here -->
+                    </div>
+                </div>
+            </div>
 
             <div id="search-flights" class="section">
                 <!-- <h2>Booking Summary</h2> -->
-                <h2>Search for Flights</h2>
+                <div id="search-flights-header">
+                    <h2>Search Flights</h2>
+                    <button id="openMapModal" onclick="openMapModal()">Show Map with All Routes</button>
+                </div>
+
                 <form id="search-flights-form" onsubmit="searchFlights(event)">
                     <label for="city-origin">Where are you traveling from?</label>
                     <input type="text" id="city-origin" name="city-origin" required>
@@ -300,8 +313,9 @@
                     <label for="city-destination">Where do you want to go?</label>
                     <input type="text" id="city-destination" name="city-destination" required>
 
-                    <button type="submit">Find Flights</button>
+                    <button type="submit">Find Flights</button> 
                 </form>
+
                 <table id="flights-table" class="styled-table" style="display: none;">
                     <thead>
                         <tr>

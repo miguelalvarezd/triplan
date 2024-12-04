@@ -1,14 +1,23 @@
 from flask import Flask, jsonify, request, send_from_directory, send_file, Response
 from flask_mysqldb import MySQL
 from flask_cors import CORS
-from library.airports_check import find_airports_in_radius
+from library.airports_check import find_airports_in_radius, get_airport_details
 from library.utils import format_timedelta
+from library.graphs import (
+    mostrar_numero_vuelos_por_modelo,
+    mostrar_ingresos_por_trayecto,
+    mostrar_reservas_por_tier,
+    mostrar_reservas_por_origen,
+    mostrar_precio_promedio_hoteles,
+    mostrar_coches_por_aeropuerto,
+)
 from random import choice
 import io
 import matplotlib.pyplot as plt
 from decimal import Decimal
 from collections import OrderedDict
 import json
+import folium
 
 app = Flask(__name__, static_folder="static")
 
@@ -1134,14 +1143,17 @@ def calculate_price():
             "JOIN TIERS TI ON CL.TIER = TI.TIER WHERE CL.DNI = %s"
         )
 
-        final_query = tier_discount_query % (total_query, "%s")
-        params.append(dni)
+        if(total_query):
+            final_query = tier_discount_query % (total_query, "%s")
+            params.append(dni)
 
-        cursor.execute(final_query, params)
-        result = cursor.fetchone()
+            cursor.execute(final_query, params)
+            result = cursor.fetchone()
 
-        if result:
-            total_price = result[0]
+            if result:
+                total_price = result[0]
+            else:
+                total_price = 0
         else:
             total_price = 0
 
@@ -1229,6 +1241,102 @@ def generate_report(report_type):
 
     except Exception as ex:
         return jsonify({"success": False, "message": str(ex)}), 500
+    
+
+##############################
+##########    MAP   ##########
+##############################
+
+@app.route('/api/map', methods=['GET'])
+def plot_flight_routes():
+    try:
+        cursor = conexion.connection.cursor()
+
+        # Query to get all routes (ORIGEN and DESTINO pairs)
+        sql_routes = """
+            SELECT ORIGEN, DESTINO FROM TRAYECTOS
+            GROUP BY ORIGEN, DESTINO
+            ORDER BY ORIGEN;
+        """
+        cursor.execute(sql_routes)
+        routes = cursor.fetchall()
+
+        # Query to get all unique airports
+        sql_airports = """
+            SELECT DISTINCT ORIGEN FROM TRAYECTOS
+            UNION
+            SELECT DISTINCT DESTINO FROM TRAYECTOS;
+        """
+        cursor.execute(sql_airports)
+        airport_codes = [row[0] for row in cursor.fetchall()]  # Flatten list of tuples
+
+        # Fetch details for all unique airports
+        airport_data = {}
+        for code in airport_codes:
+            details = get_airport_details(code)
+            if details:
+                airport_data[code] = details
+
+        # Create a Folium map
+        folium_map = folium.Map(location=[39.8283, -98.5795], zoom_start=5)
+
+        # Add airport markers
+        for code, info in airport_data.items():
+            folium.Marker(
+                location=[info["lat"], info["lon"]],
+                popup=f"{info['name']} ({code})",
+                icon=folium.Icon(color="red")
+            ).add_to(folium_map)
+
+        # Add routes
+        for origin, destination in routes:
+            if origin in airport_data and destination in airport_data:
+                folium.PolyLine(
+                    locations=[
+                        [airport_data[origin]["lat"], airport_data[origin]["lon"]],
+                        [airport_data[destination]["lat"], airport_data[destination]["lon"]]
+                    ],
+                    color="blue",
+                    weight=2.5,
+                    opacity=0.8,
+                    popup=f"Route: {origin} - {destination}"
+                ).add_to(folium_map)
+
+        # Convert Folium map to HTML
+        map_html = folium_map._repr_html_()
+
+        return map_html
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+##############################
+##########  GRAPHS  ##########
+##############################
+
+@app.route('/api/graphs/<graph_type>', methods=['GET'])
+def plot_graphs(graph_type):
+    GRAPH_FUNCTIONS = {
+        "flights-by-model": mostrar_numero_vuelos_por_modelo,
+        "revenue-by-route": mostrar_ingresos_por_trayecto,
+        "reservations-by-tier": mostrar_reservas_por_tier,
+        "reservations-by-origin": mostrar_reservas_por_origen,
+        "average-hotel-price": mostrar_precio_promedio_hoteles,
+        "cars-by-airport": mostrar_coches_por_aeropuerto,
+    }
+    try:
+        # Fetch the corresponding graph function
+        graph_function = GRAPH_FUNCTIONS.get(graph_type)
+        if not graph_function:
+            return jsonify({"success": False, "message": "Invalid graph type."}), 400
+
+        # Generate the graph
+        buffer = graph_function(conexion.connection)
+
+        # Return the graph as a PNG image
+        return send_file(buffer, mimetype="image/png")
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 ##############################

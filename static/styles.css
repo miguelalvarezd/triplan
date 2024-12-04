@@ -2,20 +2,19 @@
 :root {
 
     /* Aquamarine Green Shades */
-    --primary:#5BA586;/* #007A7D; 
+    --primary:#007A7D;/* #007A7D; #5BA586
     /*
     /* Main Aquamarine Green */
-    --primary-dark: #467A63;
+    --primary-dark: #FFBB26; /*467A63
     /* Dark Aquamarine Green */
-    --primary-light: #A9D7C0;
+    --primary-light: #A9D7C0; /* #A9D7C0
     /* Light Aquamarine Green */
-    /*FFBB26
     /* Neutral Colors */
     --secondary: #4B5563;
     /* Neutral Gray */
-    --background-light: #d9f1e6;
+    --background-light: #C4E7E3; /*#d9f1e6
     /* Light Background */
-    --background-dark: #1F332A;
+    --background-dark: #D1981E; /*1F332A
     /* Dark Background */
 
     /* Accent Colors */
@@ -31,6 +30,10 @@
     --third: #023D54;
 
     --white: #FFFFFF;
+    --black: #00383A;
+
+    --confirm: #467A63;
+    --confirm-dark: #1F332A;
 
     --shadow: 4px 4px 6px -1px rgb(0 0 0 / 0.15);
     --radius: 8px;
@@ -70,7 +73,7 @@ h1 {
 
 h2 {
     font-size: 1.8rem;
-    color: var(--primary-dark);
+    color: var(--primary);
     margin-bottom: 1.5rem;
 }
 
@@ -112,7 +115,7 @@ main.section .options {
 main.section .nav-button {
     background-color: var(--primary-dark);
     /* Main green color */
-    color: var(--white);
+    color: var(--black);
     /* Text color for contrast */
     font-size: 2rem;
     /* Larger font size for emphasis */
@@ -188,6 +191,12 @@ select {
     border: 1px solid var(--primary-light);
 }
 
+#graphs-form select {
+    background-color: var(--white);
+    /* Light blue color or your desired color */
+    border: 1px solid var(--primary-light);
+}
+
 #new-tier-form select {
     background-color: var(--white);
     /* Light blue color or your desired color */
@@ -216,7 +225,7 @@ select:focus {
 /* Button styles */
 button {
     background-color: var(--primary-dark);
-    color: var(--white);
+    color: var(--black);
     padding: 0.75rem 1.5rem;
     border: none;
     border-radius: var(--radius);
@@ -446,7 +455,7 @@ footer {
 } */
 
 .section h2 {
-    color: var(--primary-dark);
+    color: var(--primary);
     margin-bottom: 1.5rem;
 }
 
@@ -457,7 +466,7 @@ footer {
 .form-group label {
     display: block;
     margin-bottom: 0.5rem;
-    color: var(--primary-dark);
+    color: var(--primary);
 }
 
 .form-group input {
@@ -470,7 +479,7 @@ footer {
 
 .submit-btn {
     background-color: var(--primary-dark);
-    color: white;
+    color: var(--black);
     padding: 0.5rem 1rem;
     border: none;
     border-radius: var(--radius);
@@ -528,7 +537,7 @@ footer {
 
 #clientInfoModal h2 {
     margin-bottom: 1.5rem;
-    color: var(--primary-dark);
+    color: var(--primary);
 }
 
 .client-info-btn {
@@ -536,7 +545,7 @@ footer {
     /* top: 1rem;
     left: 1rem; */
     background-color: var(--primary-dark);
-    color: var(--white);
+    color: var(--black);
     padding: 0.5rem 1rem;
     border: none;
     border-radius: var(--radius);
@@ -658,7 +667,7 @@ footer {
 }
 
 #editDiscountModal h2 {
-    color: var(--primary-dark);
+    color: var(--primary);
     margin-bottom: 1.5rem;
 }
 
@@ -687,7 +696,7 @@ footer {
 }
 
 #manageTiersModal h2 {
-    color: var(--primary-dark);
+    color: var(--primary);
     margin-bottom: 1.5rem;
 }
 
@@ -726,6 +735,21 @@ footer {
     justify-content: space-between;
     align-items: center;
     width: 100%;
+}
+
+#search-flights-header {
+    /* padding: 0.5rem 2rem; */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    margin-bottom: 1rem;
+}
+
+#search-flights-header h2 {
+    margin: 0; /* Remove default margin */
+    line-height: 1; /* Ensure consistent line height */
 }
 
 #confirm-booking-buttons {
@@ -800,7 +824,7 @@ footer {
 }
 
 #cancelBookingModal h2 {
-    color: var(--primary-dark);
+    color: var(--primary);
     margin-bottom: 1.5rem;
 }
 
@@ -848,7 +872,7 @@ footer {
 
 #bookingDetailsModal h2 {
     margin-bottom: 1.5rem;
-    color: var(--primary-dark);
+    color: var(--primary);
 }
 
 .booking-actions {
@@ -861,7 +885,7 @@ footer {
 
 #booking-details {
     /* background-color: var(--error-red); */
-    color: var(--white);
+    color: var(--black);
     padding: 0.5rem 1rem;
     border: none;
     border-radius: var(--radius);
@@ -911,7 +935,7 @@ footer {
 
 #bookFlightModal h2 {
     margin-bottom: 1.5rem;
-    color: var(--primary-dark);
+    color: var(--primary);
 }
 
 #confirmationModal {
@@ -954,7 +978,7 @@ footer {
 
 #confirmationModal h2 {
     margin-bottom: 1.5rem;
-    color: var(--primary-dark);
+    color: var(--primary);
 }
 
 #confirmationMessage{
@@ -963,7 +987,7 @@ footer {
 
 #book-button {
     /* background-color: var(--error-red); */
-    color: var(--white);
+    color: var(--black);
     padding: 0.5rem 1rem;
     border: none;
     border-radius: var(--radius);
@@ -991,7 +1015,7 @@ footer {
     border: none;
     border-radius: var(--radius);
     background-color: var(--primary-dark);
-    color: white;
+    color: var(--black);
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
@@ -1020,7 +1044,7 @@ footer {
 table button {
     padding: 0.5rem 1rem;
     background-color: var(--primary-dark);
-    color: white;
+    color: var(--black);
     border: none;
     cursor: pointer;
 }
@@ -1079,7 +1103,9 @@ input[type="checkbox"]:checked::after {
 
 #total-price {
     font-weight: bold;
-    color: var(--accent-gold);
+    color: var(--primary-dark);
+    text-shadow: 
+         2px  2px 0 var(--black); /* Bottom-right */
 }
 
 #total-price-container-reservation {
@@ -1091,5 +1117,138 @@ input[type="checkbox"]:checked::after {
 
 #total-price-reservation {
     font-weight: bold;
-    color: var(--accent-gold);
+    color: var(--primary-dark);
+    text-shadow: 
+         2px  2px 0 var(--black); /* Bottom-right */
+}
+
+#mapModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+#mapModal .modal-content {
+    position: relative;
+    margin: 5% auto;
+    padding: 2rem;
+    width: 80%;
+    max-width: 900px;
+    background-color: var(--background-light);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+#mapContainer {
+    width: 100%;
+    height: 600px; /* Adjust height as needed */
+
+    overflow: hidden;
+    border: 2px solid var(--primary-dark); /* Add border */
+    border-radius: var(--radius); /* Rounded corners */
+
+    margin: 0; /* Remove any margin */
+    padding: 0; /* Remove any padding */
+    display: flex; /* Ensure the map container uses the full space */
+}
+
+/* Target the immediate child div */
+#mapContainer > div {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Target the div with padding-bottom */
+#mapContainer > div > div {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Target the iframe */
+#mapContainer iframe {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Hide the trust notebook message */
+#mapContainer span {
+    display: none !important;
+}
+
+.tabs {
+    display: flex;
+    margin-bottom: 10px;
+    /* border: 1px solid var(--primary-dark); Common border around the tabs */
+    border-radius: var(--radius); /* Rounds the outer borders */
+    overflow: hidden; /* Ensures the tabs stay within the rounded border */
+    gap: 1px;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 10px;
+    background-color: var(--primary);
+    color: var(--white);
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s;
+    border: none; /* Remove individual borders */
+    border-radius: 0;
+    border-right: 1px solid transparent; /* Straight border between tabs */
+}
+
+.tab-button:hover {
+    background-color: var(--secondary);
+    color: var(--white);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-button:first-child {
+    border-top-left-radius: var(--radius); /* Round top-left corner for the first tab */
+    border-bottom-left-radius: var(--radius); /* Round bottom-left corner for the first tab */
+}
+
+.tab-button:last-child {
+    border-right: none; /* Remove the right border for the last tab */
+    border-top-right-radius: var(--radius); /* Round top-right corner for the last tab */
+    border-bottom-right-radius: var(--radius); /* Round bottom-right corner for the last tab */
+}
+
+.tab-button.active {
+    background-color: var(--primary-dark); /* Active tab color */
+    color: var(--black); /* Active tab text color */
+    font-weight: bold; /* Optional: emphasize the active tab */
+}
+
+.tab-button.active:hover {
+    background-color: var(--background-dark); /* Active tab color */
+}
+
+.tab-button:hover:not(.active) {
+    background-color: var(--secondary);
+    color: var(--white);
 }

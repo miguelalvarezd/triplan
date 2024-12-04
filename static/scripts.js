@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const welcomeMessage = document.getElementById('welcome-message');
     const clientInfoModal = document.getElementById('clientInfoModal');
     const bookingTable = document.getElementById('summary-table');
+    const reportsTabs = document.querySelectorAll('reports-section');
 
     if (bookFlightModal) {
         bookFlightModal.style.display = 'none'; // Ensure modal is hidden initially
@@ -215,7 +216,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (tiersTable) {
         populateTiersTable();
     }
+
+    if(reportsTabs){
+        showTab('tables');
+    }
 });
+
+function showTab(tab) {
+    const tabs = document.querySelectorAll('.tab-content');
+    const buttons = document.querySelectorAll('.tab-button');
+
+    // Hide all tabs and remove active class from buttons
+    tabs.forEach(t => t.classList.remove('active'));
+    buttons.forEach(b => b.classList.remove('active'));
+
+    // Show the selected tab and mark its button as active
+    document.getElementById(`${tab}-tab`).classList.add('active');
+    document.querySelector(`.tab-button[onclick="showTab('${tab}')"]`).classList.add('active');
+}
+
+function cleanGraph(){
+    const graphContainer = document.getElementById('graph-container');
+    graphContainer.style.display = 'none';
+}
+
+async function fetchGraph(event) {
+    event.preventDefault();
+    const graphType = document.getElementById('graph-type').value;
+
+    try {
+        // Fetch the graph as a binary response (blob)
+        const response = await fetch(`http://localhost:5000/api/graphs/${graphType}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch graph. Server responded with an error.');
+        }
+
+        // Convert the response to a blob
+        const blob = await response.blob();
+        
+        // Create a URL for the blob
+        const graphUrl = URL.createObjectURL(blob);
+
+        // Display the image
+        const graphContainer = document.getElementById('graph-container');
+        graphContainer.innerHTML = `<img src="${graphUrl}" alt="${graphType}" style="max-width: 100%; height: auto;">`;
+        graphContainer.style.display = 'block';
+    } catch (error) {
+        console.error('Error fetching graph:', error);
+        alert('An error occurred while fetching the graph.');
+    }
+}
+
 
 async function populateBookingSummary() {
     const dni = localStorage.getItem('customerDNI');
@@ -703,7 +754,6 @@ async function deleteAccount() {
         }
     }
 }
-
 
 function searchFlights(event) {
     event.preventDefault();
@@ -1553,7 +1603,50 @@ async function fetchReport(event) {
     }
 }
 
+function cleanTables(){
+    const reportTable = document.getElementById('report-table');
+    reportTable.style.display = 'none';
+}
 
+
+// Function to open the map modal
+function openMapModal() {
+    // Show the modal
+    const mapModal = document.getElementById('mapModal');
+    mapModal.style.display = 'block';
+
+    // Fetch the map content from the API
+    fetch('http://localhost:5000/api/map')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(html => {
+            // Insert map HTML content into the modal container
+            document.getElementById('mapContainer').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error fetching the map:', error);
+            document.getElementById('mapContainer').innerHTML = '<p>Error loading the map. Please try again later.</p>';
+        });
+}
+
+// Function to close the map modal
+function closeMapModal() {
+    const mapModal = document.getElementById('mapModal');
+    mapModal.style.display = 'none';
+    document.getElementById('mapContainer').innerHTML = ''; // Clear the map content
+}
+
+// Close modal if user clicks outside the content
+window.addEventListener('click', (event) => {
+    const mapModal = document.getElementById('mapModal');
+    if (event.target === mapModal) {
+        closeMapModal();
+    }
+});
 
 
 
