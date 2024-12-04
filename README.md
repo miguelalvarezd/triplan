@@ -1,6 +1,6 @@
 # **TRIPLAN**
 
-This repository contains all the information necessary to implement the database with a REST API. Please refer to the **DATABASE CREATION** and the **REST API** sections to know more.
+This repository contains all the information necessary to implement the database with a REST API. Please refer to the [**DATABASE CREATION**](#database-creation) and the [**REST API**](#rest-api) sections to know more.
 
 ![Triplan Logo](logo.png)
 
