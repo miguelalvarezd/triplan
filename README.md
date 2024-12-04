@@ -12,7 +12,7 @@ The files in the `create_db` folder are used to generate and fill the database f
 ### **REQUIREMENTS**
 To create and fill the database you need to have **Python** installed on your PC.
 
-Additionally, the following libraries are needed:
+The following libraries are also needed:
 - `pandas`, to manage dataframes;
 - `numpy`, to manage date types;
 - `mysql`, to connect to the mysql server.
