@@ -951,7 +951,7 @@ function handleReturnDate() {
     fetchAvailableReturnFlights();
 }
 
-function toggleReturnFlight() {
+async function toggleReturnFlight() {
     const addReturnFlight = document.getElementById('add-return-flight').checked;
     const container = document.getElementById('return-table-container');
     const dateSelection = document.getElementById('return-date-selection');
@@ -968,10 +968,10 @@ function toggleReturnFlight() {
         document.getElementById('seat-selection-return').style.display = 'none';
         selectedReturnRouteID = null;
     }
-    updateTotalPrice(0);
+    await updateTotalPrice(0);
 }
 
-function selectReturnFlight(routeID, origin, destination, departure, arrival) {
+async function selectReturnFlight(routeID, origin, destination, departure, arrival) {
     const returnFlightTable = document.getElementById('return-flight-table');
     const returnFlightHeader = document.getElementById('return-table-header');
     const departureDate = document.getElementById('return-date').value;
@@ -995,10 +995,10 @@ function selectReturnFlight(routeID, origin, destination, departure, arrival) {
     selectedReturnRouteID = routeID;
     populateSeats(departureDate, 1);
     document.getElementById('seat-selection-return').style.display = 'block';
-    updateTotalPrice(0);
+    await updateTotalPrice(0);
 }
 
-function cancelReturnFlight(event) {
+async function cancelReturnFlight(event) {
     if (event) {
         event.preventDefault(); // Prevent the default form submission behavior
     }
@@ -1013,7 +1013,7 @@ function cancelReturnFlight(event) {
     handleReturnDate(); // Reload available flights
 
     selectedReturnRouteID = null;
-    updateTotalPrice(0);
+    await updateTotalPrice(0);
 }
 
 // Open confirmation modal
@@ -1039,7 +1039,7 @@ function closeConfirmationModal() {
 // Hook into the confirm booking button
 function confirmBooking() {
     const selectedOptions = [];
-    if (selectedReturnFlightID) {
+    if (selectedReturnRouteID) {
         selectedOptions.push("Round Trip Flight");
     } else {
         selectedOptions.push("One Way Flight");
@@ -1294,7 +1294,7 @@ async function fetchAvailableCars() {
     }
 }
 
-function selectHotel(hotelID, hotelName, city, price) {
+async function selectHotel(hotelID, hotelName, city, price) {
     const hotelTable = document.getElementById('hotel-table');
     const hotelHeader = document.getElementById('hotel-table-header');
 
@@ -1315,10 +1315,10 @@ function selectHotel(hotelID, hotelName, city, price) {
 
     // Store the selected hotel ID
     selectedHotelID = hotelID;
-    updateTotalPrice(0);
+    await updateTotalPrice(0);
 }
 
-function toggleHotelTable() {
+async function toggleHotelTable() {
     const addHotel = document.getElementById('add-hotel').checked;
     const hotelTableContainer = document.getElementById('hotel-table-container');
     const hotelHeader = document.getElementById('hotel-table-header');
@@ -1331,10 +1331,10 @@ function toggleHotelTable() {
         selectedHotelID = null;
         hotelHeader.textContent = 'Available Hotels';
     }
-    updateTotalPrice(0);
+    await updateTotalPrice(0);
 }
 
-function cancelHotel(event) {
+async function cancelHotel(event) {
     if (event) {
         event.preventDefault(); // Prevent the default form submission behavior
     }
@@ -1347,10 +1347,10 @@ function cancelHotel(event) {
 
     toggleHotelTable(); // Reload available hotels
     selectedHotelID = null;
-    updateTotalPrice(0);
+    await updateTotalPrice(0);
 }
 
-function selectCar(carID, carModel, city, price) {
+async function selectCar(carID, carModel, city, price) {
     const carTable = document.getElementById('car-table');
     const carHeader = document.getElementById('car-table-header');
 
@@ -1369,10 +1369,10 @@ function selectCar(carID, carModel, city, price) {
         </tr>
     `;
     selectedCarID = carID;
-    updateTotalPrice(0);
+    await updateTotalPrice(0);
 }
 
-function toggleCarTable() {
+async function toggleCarTable() {
     const addCar = document.getElementById('add-car').checked;
     const carTableContainer = document.getElementById('car-table-container');
     const carHeader = document.getElementById('car-table-header');
@@ -1385,10 +1385,10 @@ function toggleCarTable() {
         selectedCarID = null;
         carHeader.textContent = 'Available Cars';
     }
-    updateTotalPrice(0);
+    await updateTotalPrice(0);
 }
 
-function cancelCar(event) {
+async function cancelCar(event) {
     if (event) {
         event.preventDefault(); // Prevent the default form submission behavior
     }
@@ -1402,7 +1402,7 @@ function cancelCar(event) {
     toggleCarTable(); // Reload available cars
 
     selectedCarID = null;
-    updateTotalPrice(0);
+    await updateTotalPrice(0);
 }
 
 async function updateTotalPrice(mode) {
