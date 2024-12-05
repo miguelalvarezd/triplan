@@ -1,0 +1,32 @@
+Este es el recibo de la reserva R-72286
+--------------------------------------------
+
+INFROMACION VUELO IDA
+Id vuelo: 23321
+Itinerario: JFK (None // 2024-12-01) ---> SFO
+Precio: 439(BASE) + 190(EXTRA) = 629EUR
+
+
+INFROMACION VUELO VUELTA
+Id vuelo: 1071
+Itinerario: SFO (None // 2024-12-31) ---> JFK
+Precio: 478(BASE) + 58(EXTRA) = 536EUR
+
+
+INFROMACION HABITACIÓN
+Id hotel: H-5360
+Hotel: OAKWOOD SUITES  //  Direccion: OAK BOULEVARD 872  //  Ciudad: SFO
+Numero habitacion: 18 (DOUBLE)
+Precio: 66(BASE) + 182(EXTRA) = 248EUR
+
+
+INFROMACION COCHE
+Matricula: 9838-NJV
+Modelo coche: SEAT IBIZA  //  Aeropuerto de recogida: SFO
+Precio: 80(Precio x dia) * 30(días alquiler) = 2400EUR
+
+
+---------------------------------------------
+PRECIO TOTAL RESERVA = 3565
+DESCUENTO POR TIER = 22.00%
+PRECIO FINAL = 2780.70

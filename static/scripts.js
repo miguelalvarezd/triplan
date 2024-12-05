@@ -1484,6 +1484,33 @@ async function manageTiers(event) {
 
             clientName = client.name;
             clientTier = client.tier;
+
+            modalTierClientName.textContent = clientName;
+            modalTierClientDNI.textContent = dni;
+            modalTierClientTier.textContent = clientTier;
+            manageTiersModal.style.display = 'block';
+
+            try {
+                const response = await fetch(`http://localhost:5000/api/tiers`);
+                const data = await response.json();
+
+                if (data.success) {
+
+                    const tierSelect = document.getElementById('new-tier')
+
+                    tierSelect.innerHTML = ''; // Clear previous options
+                    data.tiers.forEach(tierObj => {
+                        const option = document.createElement('option');
+                        option.value = tierObj.tier;
+                        option.textContent = `${tierObj.tier}`;
+                        tierSelect.appendChild(option);
+                    });
+                } else {
+                    alert(data.message || 'No tiers available.');
+                }
+            } catch (error) {
+                console.error('Error fetching tiers:', error);
+            }
         } else {
             alert(data.message);
         }
@@ -1492,32 +1519,7 @@ async function manageTiers(event) {
         alert("Failed to load client data. Please try again.");
     }
 
-    modalTierClientName.textContent = clientName;
-    modalTierClientDNI.textContent = dni;
-    modalTierClientTier.textContent = clientTier;
-    manageTiersModal.style.display = 'block';
-
-    try {
-        const response = await fetch(`http://localhost:5000/api/tiers`);
-        const data = await response.json();
-
-        if (data.success) {
-
-            const tierSelect = document.getElementById('new-tier')
-
-            tierSelect.innerHTML = ''; // Clear previous options
-            data.tiers.forEach(tierObj => {
-                const option = document.createElement('option');
-                option.value = tierObj.tier;
-                option.textContent = `${tierObj.tier}`;
-                tierSelect.appendChild(option);
-            });
-        } else {
-            alert(data.message || 'No tiers available.');
-        }
-    } catch (error) {
-        console.error('Error fetching tiers:', error);
-    }
+    
 }
 
 // Close the modal
